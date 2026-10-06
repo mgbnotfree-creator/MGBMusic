@@ -203,7 +203,7 @@ def start_private_kb(lang: Optional[dict] = None) -> str:
             _url_btn(_lbl(lang, "btn_updates", "🍹 ᴜᴘᴅᴀᴛᴇs 🍹"), config.UPDATES_CHANNEL, random_style()),
         )
         + _row(_tg_btn(_lbl(lang, "btn_help", "🏩 ʜᴇʟᴘ & ᴄᴏᴍᴍᴀɴᴅs 🏩"), "show_help", random_style()))
-        # Naye API Plans aur Naya GitHub Payment QR Link yahan set kiya gaya hai
+        # Naya Payment QR Link yahan update kar diya gaya hai
         + _row(
             _tg_btn(_lbl(lang, "btn_plans", "💎 ᴀᴘɪ ᴘʟᴀɴs "), "show_plans", random_style()),
             _url_btn(_lbl(lang, "btn_qr", "💻 ᴘᴀʏᴍᴇɴᴛ ǫʀ"), "https://github.com/user-attachments/assets/52db898f-cd48-402b-863b-4226ec462f1c", random_style()),
