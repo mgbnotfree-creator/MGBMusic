@@ -304,3 +304,13 @@ def support_kb(lang: Optional[dict] = None) -> str:
         _url_btn(_lbl(lang, "btn_support", "🍬 sᴜᴘᴘᴏʀᴛ 🍬"), config.SUPPORT_GROUP, random_style())
     )
     
+def start_group_kb(lang: Optional[dict] = None) -> str:
+    """Short 2-row panel shown on /start inside a group."""
+    return (
+        _row(
+            _url_btn(_lbl(lang, "btn_add_me", "⛩️ ᴧᴅᴅ мᴇ ʙᴧʙʏ ⛩️"), f"{config.BOT_LINK}?startgroup=true", random_style()),
+            _url_btn(_lbl(lang, "btn_support", "🍬 sᴜᴘᴘᴏʀᴛ 🍬"), config.SUPPORT_GROUP, random_style()),
+        )
+        + _row(_tg_btn(_lbl(lang, "btn_help", "🏩 ʜᴇʟᴘ & ᴄᴏᴍᴍᴧɴᴅs 🏩"), "show_help", random_style()))
+            )
+    
