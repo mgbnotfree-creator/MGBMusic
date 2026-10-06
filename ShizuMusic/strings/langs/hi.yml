@@ -434,4 +434,56 @@ help_categories:
     rows:
       - ["/id", "यूज़र / चैट / मैसेज की आईडी पाएं — रिप्लाई के साथ भी काम करता है"]
       - ["/id @username", "किसी भी यूज़र की आईडी पाएं"]
-      - ["/rep
+      - ["/repo", "सोर्स कोड लिंक"]
+      - ["/logger on, /logger off", "ʟᴏɢɢᴇʀ ɢʀᴏᴜᴘ ʟᴏɢs ᴏɴ/off (ᴏᴡɴᴇʀ ᴏɴʟʏ)"]
+      - ["/stats", "पूरे आंकड़े — सिस्टम + मोंगोडीबी जानकारी (सिर्फ़ ओनर)"]
+
+# ── /language (picker title) ─────────────────────────────────────────────────
+lang_title: "🌐 भाषा"
+
+# ── more button labels ───────────────────────────────────────────────────────
+btn_source_short: "🪼 सोर्स 🪼"
+btn_language:     "🌐 भाषा"
+btn_thumb_on:     "🖼 थंब | ऑन"
+btn_thumb_off:    "🖼 थंब | ऑफ़"
+pill_support:     "🍬 सपोर्ट"
+pill_updates:     "🍹 अपडेट्स"
+
+# ── help menu grid labels ────────────────────────────────────────────────────
+help_btn_admin:    "एडमिन"
+help_btn_autoplay: "ऑटो-प्ले"
+help_btn_gcast:    "जी-कास्ट"
+help_btn_blchat:   "ब्लॉक-चैट"
+help_btn_blusers:  "ब्लॉक-यूज़र"
+help_btn_ping:     "पिंग"
+help_btn_play:     "प्ले"
+help_btn_speed:    "स्पीड"
+help_btn_info:     "जानकारी"
+help_btn_playlist: "प्लेलिस्ट"
+help_btn_channel: "चैनल"
+
+# ── help "play" panel: config-driven rows + thumbnail ───────────────────────
+help_play_max_duration:     "अधिकतम अवधि"
+help_play_max_duration_val: "{0} मिनट"
+help_play_queue_limit:      "क्यू सीमा"
+help_play_queue_limit_val:  "{0} गाने"
+help_thumbnail_row: ["/thumbnail on, /thumbnail off", "गाने का थंबनेल दिखाएं या छिपाएं"]
+
+# ── /thumbnail ───────────────────────────────────────────────────────────────
+thumb_title: "🖼 थंबनेल"
+thumb_status_note: |-
+  <code>/thumbnail on</code> · <code>/thumbnail off</code>
+  अगले गाने से लागू होगा।
+thumb_enabled_title:  "🖼 थंबनेल चालू"
+thumb_enabled_note:   "द्वारा » {0}\nअगले गाने अपने थंबनेल के साथ दिखेंगे।"
+thumb_disabled_title: "🖼 थंबनेल बंद"
+thumb_disabled_note:  "द्वारा » {0}\nअगले गाने बिना थंबनेल के दिखेंगे।"
+thumb_enabled_toast:  "🖼 अगले गानों के लिए थंबनेल चालू"
+thumb_disabled_toast: "🖼 अगले गानों के लिए थंबनेल बंद"
+
+# ── player panel: Autoplay toggle + Close ────────────────────────────────────
+btn_autoplay_on:  "🔁 ऑटोप्ले | ऑन"
+btn_autoplay_off: "🔁 ऑटोप्ले | ऑफ़"
+autoplay_toggle_on_toast:  "♬ ऑटोप्ले चालू — मिलते-जुलते गाने चलते रहेंगे"
+autoplay_toggle_off_toast: "♬ ऑटोप्ले बंद"
+player_closed_by: "बंद किया : {0}"
