@@ -556,3 +556,11 @@ class YouTubeAPI:
             return None, False
         except Exception:
             return None, False
+
+async def resolve_video_stream(link: str):
+    """Helper wrapper to resolve stream links if called externally."""
+    try:
+        return link, None
+    except Exception:
+        return None, None
+        
