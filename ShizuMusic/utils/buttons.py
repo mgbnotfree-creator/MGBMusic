@@ -202,7 +202,7 @@ def start_private_kb(lang: Optional[dict] = None) -> str:
             _url_btn(_lbl(lang, "btn_support", "🍬 sᴜᴘᴘᴏʀᴛ 🍬"), config.SUPPORT_GROUP, random_style()),
             _url_btn(_lbl(lang, "btn_updates", "🍹 ᴜᴘᴅᴀᴛᴇs 🍹"), config.UPDATES_CHANNEL, random_style()),
         )
-        + _row(_tg_btn(_lbl(lang, "btn_help", "🏩 ʜᴇʟᴘ & ᴄᴏᴍᴍᴀɴᴅs 🏩"), "show_help", random_style()))
+        + _row(_tg_btn(_lbl(lang, "btn_help", "🏩 ʜᴇʟᴘ & ᴄᴏᴍᴍᴀɴْدs 🏩"), "show_help", random_style()))
         # Naya Payment QR Link yahan update kar diya gaya hai
         + _row(
             _tg_btn(_lbl(lang, "btn_plans", "💎 ᴀᴘɪ ᴘʟᴀɴs "), "show_plans", random_style()),
@@ -212,20 +212,11 @@ def start_private_kb(lang: Optional[dict] = None) -> str:
             _url_btn(_lbl(lang, "btn_owner", "🫧 ᴏᴡɴᴇʀ 🫧"), f"tg://user?id={config.OWNER_ID}", random_style()),
             _url_btn(_lbl(lang, "btn_source_short", "🍡 sᴏᴜʀᴄᴇ 🍡"), my_repo, random_style()),
         )
+        # Red box wali jagah par /plans command ka button
+        + _row(_tg_btn("🚀 /ᴘʟᴀɴs ᴄᴏᴍᴍᴀɴᴅ", "show_plans", random_style()))
         + _row(_tg_btn(_lbl(lang, "btn_language", "🌐 ʟᴀɴɢᴜᴀɢᴇ"), "show_lang", random_style()))
     )
     
-
-def start_group_kb(lang: Optional[dict] = None) -> str:
-    """Short 2-row panel shown on /start inside a group."""
-    return (
-        _row(
-            _url_btn(_lbl(lang, "btn_add_me", "⛩️ ᴧᴅᴅ мᴇ ʙᴧʙʏ ⛩️"), f"{config.BOT_LINK}?startgroup=true", random_style()),
-            _url_btn(_lbl(lang, "btn_support", "🍬 sᴜᴘᴘᴏʀᴛ 🍬"), config.SUPPORT_GROUP, random_style()),
-        )
-        + _row(_tg_btn(_lbl(lang, "btn_help", "🏩 ʜᴇʟᴘ & ᴄᴏᴍᴍᴀɴᴅs 🏩"), "show_help", random_style()))
-    )
-
 
 # ═════════════════════════════════════════════════════════════════════════════
 # HELP MENU
