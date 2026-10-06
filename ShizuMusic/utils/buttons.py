@@ -160,7 +160,7 @@ def skip_clear_kb(lang: Optional[dict] = None) -> str:
 # ═════════════════════════════════════════════════════════════════════════════
 def repo_kb(source_url: str, lang: Optional[dict] = None) -> str:
     """Source / Fork / Support / Updates grid (used by /repo)."""
-    my_repo = "https://github.com/mgbnotfree-creator/MY_API_MUSIC-"
+    my_repo = "https://github.com/mgbnotfree-creator/MGBMusic"
     return (
         _row(
             _url_btn(_lbl(lang, "btn_source", "🍡 sᴏᴜʀᴄᴇ ᴄᴏᴅᴇ 🍡"), my_repo, random_style()),
@@ -195,7 +195,7 @@ def added_by_kb(user_id: int, user_name: str) -> InlineKeyboardMarkup:
 # ═════════════════════════════════════════════════════════════════════════════
 def start_private_kb(lang: Optional[dict] = None) -> str:
     """Full 4-row panel shown on /start in a private chat."""
-    my_repo = "https://github.com/mgbnotfree-creator/MY_API_MUSIC-"
+    my_repo = "https://github.com/mgbnotfree-creator/MGBMusic"
     return (
         _row(_url_btn(_lbl(lang, "btn_add_me", "⛩️ ᴧᴅᴅ мᴇ ʙᴧʙʏ ⛩️"), f"{config.BOT_LINK}?startgroup=true", random_style()))
         + _row(
@@ -203,10 +203,10 @@ def start_private_kb(lang: Optional[dict] = None) -> str:
             _url_btn(_lbl(lang, "btn_updates", "🍹 ᴜᴘᴅᴀᴛᴇs 🍹"), config.UPDATES_CHANNEL, random_style()),
         )
         + _row(_tg_btn(_lbl(lang, "btn_help", "🏩 ʜᴇʟᴘ & ᴄᴏᴍᴍᴀɴᴅs 🏩"), "show_help", random_style()))
-        # ── Naye API Plans aur Payment QR buttons yahan add kiye gaye hain ──
+        # Naye API Plans aur Naya GitHub Payment QR Link yahan set kiya gaya hai
         + _row(
             _tg_btn(_lbl(lang, "btn_plans", "💎 ᴀᴘɪ ᴘʟᴀɴs "), "show_plans", random_style()),
-            _url_btn(_lbl(lang, "btn_qr", "💻 ᴘᴀʏᴍᴇɴᴛ ǫʀ"), "https://graph.org/file/ec12b5f611339d0e12b68-bb2038837e496d0655.jpg", random_style()),
+            _url_btn(_lbl(lang, "btn_qr", "💻 ᴘᴀʏᴍᴇɴᴛ ǫʀ"), "https://github.com/user-attachments/assets/52db898f-cd48-402b-863b-4226ec462f1c", random_style()),
         )
         + _row(
             _url_btn(_lbl(lang, "btn_owner", "🫧 ᴏᴡɴᴇʀ 🫧"), f"tg://user?id={config.OWNER_ID}", random_style()),
