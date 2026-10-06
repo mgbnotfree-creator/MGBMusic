@@ -347,7 +347,8 @@ async def on_callback(client, cbq: CallbackQuery) -> None:
         )
         kb = (
             _row(
-                _url_btn("💻 ᴘᴀʏᴍᴇɴᴛ ǫʀ", "https://i.imgur.com/PZvtqgf.jpeg", "success"),
+                _url_btn("💻 ᴘᴀʏᴍᴇɴᴛ ǫʀ", "https://github.com/user-attachments/assets/52db898f-cd48-402b-863b-4226ec462f1c", "success"),
+                
                 _url_btn("🍬 sᴜᴘᴘᴏʀᴛ", config.SUPPORT_GROUP, "primary"),
             )
             + _row(_tg_btn("⌯ ʙᴀᴄᴋ ⌯", "go_back", "primary"))
