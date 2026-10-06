@@ -531,10 +531,27 @@ class YouTubeAPI:
         thumbnail    = result[query_type]["thumbnails"][0]["url"].split("?")[0]
         return title, duration_min, thumbnail, vidid
 
-    async def download(
-        self,
-        link: str,
-        mystic,
-        video:     Union[bool, str] = None,
-        videoid:   Union[bool, str] = None,
-        so
+ async def download(
+    self,
+    link: str,
+    mystic,
+    video: Union[bool, str] = None,
+    videoid: Union[bool, str] = None,
+    songaudio: Union[bool, str] = None,
+    songvideo: Union[bool, str] = None,
+    format_id: Union[bool, str] = None,
+    title: Union[bool, str] = None,
+):
+    if videoid:
+        link = self.base + link
+    try:
+        if video:
+            downloaded_file = await download_video(link)
+        else:
+            downloaded_file = await download_song(link)
+        if downloaded_file:
+            return downloaded_file, True
+        return None, False
+    except Exception:
+        return None, False
+    
