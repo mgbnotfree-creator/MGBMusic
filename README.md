@@ -1,6 +1,10 @@
 <div align="center">
 
-https://github.com/user-attachments/assets/c46c4b84-4b68-436e-af5c-78e8b31419e5
+
+
+https://github.com/user-attachments/assets/9c6108e0-9f3c-42b3-aadf-cdef239f84c7
+
+
 
 
   <h1>✨ MGB NOT FREE CODER ✨</h1>
