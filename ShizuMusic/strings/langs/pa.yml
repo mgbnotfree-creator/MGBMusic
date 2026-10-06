@@ -441,4 +441,49 @@ help_categories:
 # ── /language (picker title) ─────────────────────────────────────────────────
 lang_title: "🌐 ਭਾਸ਼ਾ"
 
-# ── more button labels ───────────────────────────
+# ── more button labels ───────────────────────────────────────────────────────
+btn_source_short: "🪼 ਸੋਰਸ 🪼"
+btn_language:     "🌐 ਭਾਸ਼ਾ"
+btn_thumb_on:     "🖼 ਥੰਬ | ਚਾਲੂ"
+btn_thumb_off:    "🖼 ਥੰਬ | ਬੰਦ"
+pill_support:     "🍬 ਸਪੋਰਟ"
+pill_updates:     "🍹 ਅੱਪਡੇਟਸ"
+
+# ── help menu grid labels ────────────────────────────────────────────────────
+help_btn_admin:    "ਐਡਮਿਨ"
+help_btn_autoplay: "ਆਟੋ-ਪਲੇ"
+help_btn_gcast:    "ਜੀ-ਕਾਸਟ"
+help_btn_blchat:   "ਬਲਾਕ-ਚੈਟ"
+help_btn_blusers:  "ਬਲਾਕ-ਯੂਜ਼ਰ"
+help_btn_ping:     "ਪਿੰਗ"
+help_btn_play:     "ਪਲੇ"
+help_btn_speed:    "ਸਪੀਡ"
+help_btn_info:     "ਜਾਣਕਾਰੀ"
+help_btn_playlist: "ਪਲੇਲਿਸਟ"
+help_btn_channel: "ਚੈਨਲ"
+
+# ── help "play" panel: config-driven rows + thumbnail ───────────────────────
+help_play_max_duration:     "ਵੱਧ ਤੋਂ ਵੱਧ ਮਿਆਦ"
+help_play_max_duration_val: "{0} ਮਿੰਟ"
+help_play_queue_limit:      "ਕਤਾਰ ਦੀ ਹੱਦ"
+help_play_queue_limit_val:  "{0} ਗਾਣੇ"
+help_thumbnail_row: ["/thumbnail on, /thumbnail off", "ਗਾਣੇ ਦਾ ਥੰਬਨੇਲ ਦਿਖਾਓ ਜਾਂ ਲੁਕਾਓ"]
+
+# ── /thumbnail ───────────────────────────────────────────────────────────────
+thumb_title: "🖼 ਥੰਬਨੇਲ"
+thumb_status_note: |-
+  <code>/thumbnail on</code> · <code>/thumbnail off</code>
+  ਅਗਲੇ ਗਾਣੇ ਤੋਂ ਲਾਗੂ ਹੋਵੇਗਾ।
+thumb_enabled_title:  "🖼 ਥੰਬਨੇਲ ਚਾਲੂ"
+thumb_enabled_note:   "ਵੱਲੋਂ » {0}\nਅਗਲੇ ਗਾਣੇ ਆਪਣੇ ਥੰਬਨੇਲ ਨਾਲ ਦਿਖਣਗੇ।"
+thumb_disabled_title: "🖼 ਥੰਬਨੇਲ ਬੰਦ"
+thumb_disabled_note:  "ਵੱਲੋਂ » {0}\nਅਗਲੇ ਗਾਣੇ ਬਿਨਾਂ ਥੰਬਨੇਲ ਦੇ ਦਿਖਣਗੇ।"
+thumb_enabled_toast:  "🖼 ਅਗਲੇ ਗਾਣਿਆਂ ਲਈ ਥੰਬਨੇਲ ਚਾਲੂ"
+thumb_disabled_toast: "🖼 ਅਗਲੇ ਗਾਣਿਆਂ ਲਈ ਥੰਬਨੇਲ ਬੰਦ"
+
+# ── player panel: Autoplay toggle + Close ────────────────────────────────────
+btn_autoplay_on:  "🔁 ਆਟੋਪਲੇ | ਚਾਲੂ"
+btn_autoplay_off: "🔁 ਆਟੋਪਲੇ | ਬੰਦ"
+autoplay_toggle_on_toast:  "♬ ਆਟੋਪਲੇ ਚਾਲੂ — ਮਿਲਦੇ-ਜੁਲਦੇ ਗਾਣੇ ਚੱਲਦੇ ਰਹਿਣਗੇ"
+autoplay_toggle_off_toast: "♬ ਆਟੋਪਲੇ ਬੰਦ"
+player_closed_by: "ਬੰਦ ਕੀਤਾ : {0}"
