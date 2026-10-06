@@ -722,3 +722,179 @@ def set_logger_enabled(enabled: bool) -> None:
         col.update_one({"_id": "logger"}, {"$set": {"enabled": bool(enabled)}}, upsert=True)
     except Exception as e:
         logger.error(f"[DB] set_logger_enabled: {e}")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# PLAYLISTS  (/pcreate /padd /premove /pview /pplay /pdelete)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def playlist_db_ready() -> bool:
+    return _db is not None
+
+
+def _pl_id(user_id: int, name: str) -> str:
+    return f"{user_id}:{name.lower()}"
+
+
+def get_playlist(user_id: int, name: str) -> Optional[dict]:
+    col = _col("playlists")
+    if col is None:
+        return None
+    try:
+        return col.find_one({"_id": _pl_id(user_id, name)})
+    except Exception as e:
+        logger.error(f"[DB] get_playlist: {e}")
+        return None
+
+
+def get_user_playlists(user_id: int) -> list:
+    col = _col("playlists")
+    if col is None:
+        return []
+    try:
+        return list(col.find({"user_id": user_id}).sort("name", 1))
+    except Exception as e:
+        logger.error(f"[DB] get_user_playlists: {e}")
+        return []
+
+
+def create_playlist(user_id: int, name: str, limit: int) -> str:
+    """Returns 'ok' | 'exists' | 'limit' | 'error'."""
+    col = _col("playlists")
+    if col is None:
+        return "error"
+    try:
+        if col.find_one({"_id": _pl_id(user_id, name)}) is not None:
+            return "exists"
+        if col.count_documents({"user_id": user_id}) >= limit:
+            return "limit"
+        col.insert_one({
+            "_id": _pl_id(user_id, name),
+            "user_id": user_id,
+            "name": name,
+            "songs": [],
+        })
+        return "ok"
+    except Exception as e:
+        logger.error(f"[DB] create_playlist: {e}")
+        return "error"
+
+
+def add_songs_to_playlist(user_id: int, name: str, songs: list, limit: int) -> Optional[dict]:
+    """
+    Append songs (duplicates by URL are skipped, playlist size is capped).
+    Returns {"added": n, "dupes": n, "full": bool, "total": n} or None on error.
+    """
+    col = _col("playlists")
+    if col is None:
+        return None
+    try:
+        doc = col.find_one({"_id": _pl_id(user_id, name)})
+        if doc is None:
+            return None
+        current = doc.get("songs", [])
+        known = {s.get("url") for s in current}
+
+        fresh, dupes, full = [], 0, False
+        for song in songs:
+            if song.get("url") in known:
+                dupes += 1
+                continue
+            if len(current) + len(fresh) >= limit:
+                full = True
+                break
+            known.add(song.get("url"))
+            fresh.append(song)
+
+        if fresh:
+            col.update_one({"_id": doc["_id"]}, {"$push": {"songs": {"$each": fresh}}})
+
+        return {
+            "added": len(fresh),
+            "dupes": dupes,
+            "full":  full,
+            "total": len(current) + len(fresh),
+        }
+    except Exception as e:
+        logger.error(f"[DB] add_songs_to_playlist: {e}")
+        return None
+
+
+def remove_song_from_playlist(user_id: int, name: str, index: int) -> Optional[dict]:
+    """Remove the song at 0-based `index`. Returns the removed song or None."""
+    col = _col("playlists")
+    if col is None:
+        return None
+    try:
+        doc = col.find_one({"_id": _pl_id(user_id, name)})
+        if doc is None:
+            return None
+        songs = doc.get("songs", [])
+        if index < 0 or index >= len(songs):
+            return None
+        removed = songs.pop(index)
+        col.update_one({"_id": doc["_id"]}, {"$set": {"songs": songs}})
+        return removed
+    except Exception as e:
+        logger.error(f"[DB] remove_song_from_playlist: {e}")
+        return None
+
+
+def delete_playlist(user_id: int, name: str) -> bool:
+    col = _col("playlists")
+    if col is None:
+        return False
+    try:
+        return col.delete_one({"_id": _pl_id(user_id, name)}).deleted_count > 0
+    except Exception as e:
+        logger.error(f"[DB] delete_playlist: {e}")
+        return False
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# CHANNEL LINKS  (/addchannel <@username | -100id>  ->  /cplay /cskip ...)
+# ═════════════════════════════════════════════════════════════════════════════
+
+def set_channel_link(group_id: int, channel_id: int) -> None:
+    col = _col("channel_links")
+    if col is None:
+        return
+    try:
+        col.update_one({"_id": group_id}, {"$set": {"channel_id": channel_id}}, upsert=True)
+    except Exception as e:
+        logger.error(f"[DB] set_channel_link: {e}")
+
+
+def remove_channel_link(group_id: int) -> None:
+    col = _col("channel_links")
+    if col is None:
+        return
+    try:
+        col.delete_one({"_id": group_id})
+    except Exception as e:
+        logger.error(f"[DB] remove_channel_link: {e}")
+
+
+def get_all_channel_links() -> dict:
+    """{group_id: channel_id} for every linked group."""
+    col = _col("channel_links")
+    if col is None:
+        return {}
+    try:
+        return {d["_id"]: d["channel_id"] for d in col.find({})}
+    except Exception as e:
+        logger.error(f"[DB] get_all_channel_links: {e}")
+        return {}
+
+
+def get_channel_link_owner(channel_id: int):
+    """Group id this channel is linked to (None if it is free)."""
+    col = _col("channel_links")
+    if col is None:
+        return None
+    try:
+        doc = col.find_one({"channel_id": channel_id})
+        return doc["_id"] if doc else None
+    except Exception as e:
+        logger.error(f"[DB] get_channel_link_owner: {e}")
+        return None
