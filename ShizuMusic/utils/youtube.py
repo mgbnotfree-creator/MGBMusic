@@ -62,11 +62,11 @@ def time_to_seconds(time) -> int:
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# DOWNLOAD HELPERS (New API — single-step direct stream)
+# DOWNLOAD HELPERS (Optimized for Crystal Clear HD Audio)
 # ═════════════════════════════════════════════════════════════════════════════
 
 async def download_song(link: str) -> str:
-    """Download audio via Shruti API. Returns local file path or None on failure."""
+    """Download highest quality audio via API. Returns local file path or None on failure."""
     video_id = _extract_video_id(link)
     if not video_id or len(video_id) < 3:
         return None
@@ -74,15 +74,16 @@ async def download_song(link: str) -> str:
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp3")
 
-    # Disk cache
+    # Disk cache check
     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         return file_path
 
     try:
         async with aiohttp.ClientSession() as session:
+            # Added quality parameter for crystal clear HD sound
             async with session.get(
                 f"{YT_API_URL}/download",
-                params={"url": video_id, "type": "audio", "api_key": YT_API_KEY},
+                params={"url": video_id, "type": "audio", "quality": "highest", "api_key": YT_API_KEY},
                 timeout=aiohttp.ClientTimeout(total=YT_STREAM_TIMEOUT),
             ) as resp:
                 if resp.status != 200:
@@ -103,7 +104,7 @@ async def download_song(link: str) -> str:
 
 
 async def download_video(link: str) -> str:
-    """Download video via Shruti API. Returns local file path or None on failure."""
+    """Download video via API. Returns local file path or None on failure."""
     video_id = _extract_video_id(link)
     if not video_id or len(video_id) < 3:
         return None
@@ -111,7 +112,7 @@ async def download_video(link: str) -> str:
     os.makedirs(DOWNLOAD_DIR, exist_ok=True)
     file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp4")
 
-    # Disk cache
+    # Disk cache check
     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         return file_path
 
@@ -119,7 +120,7 @@ async def download_video(link: str) -> str:
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"{YT_API_URL}/download",
-                params={"url": video_id, "type": "video", "api_key": YT_API_KEY},
+                params={"url": video_id, "type": "video", "quality": "highest", "api_key": YT_API_KEY},
                 timeout=aiohttp.ClientTimeout(total=YT_STREAM_TIMEOUT),
             ) as resp:
                 if resp.status != 200:
@@ -137,7 +138,7 @@ async def download_video(link: str) -> str:
         logger.error(f"[shruti] download_video error: {e}")
         _cleanup(file_path)
         return None
-
+        
 
 # ═════════════════════════════════════════════════════════════════════════════
 # PUBLIC — STREAM RESOLVER (backward-compatible)
