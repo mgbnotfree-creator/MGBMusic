@@ -23,6 +23,7 @@ https://github.com/user-attachments/assets/9c6108e0-9f3c-42b3-aadf-cdef239f84c7
   </p>
 
   <br>
+[![Telegram Channel](https://img.shields.io/badge/Telegram-Channel-blue?style=for-the-badge&logo=telegram)](https://t.me/MGB_CODER)
 
   <!-- Deployment Buttons -->
   <h3>🚀 Deploy On Hosting Platforms</h3>
