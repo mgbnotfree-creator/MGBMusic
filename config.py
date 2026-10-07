@@ -26,8 +26,8 @@ SESSION_NAME     = os.getenv("SESSION_NAME", "ShizuMusic")
 PORT             = int(os.getenv("PORT", 10000))
 
 # ── API config ────────────────────────────────────────────────────────────────
-YT_API_URL        = os.environ.get("YT_API_URL", "https://yasmeen-api-bot.onrender.com")
-YT_API_KEY        = os.environ.get("YT_API_KEY", "YasmeenBot26d3fdb9be7e458c9ecf1a08")
+YT_API_URL        = os.environ.get("YT_API_URL", "https://api.shrutibots.site")
+YT_API_KEY        = os.environ.get("YT_API_KEY", "ShrutiBotsLaL92ySOXsj4xl4k34Jv")  # Get from @SHRUTIAPIBOT on Telegram
 DOWNLOAD_DIR          = "downloads"
 YT_TOKEN_TIMEOUT  = 10    # seconds — fetch download token
 YT_STREAM_TIMEOUT = 900   # 15 min  — stream long songs
