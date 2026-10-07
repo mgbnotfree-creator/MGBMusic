@@ -26,7 +26,7 @@ SESSION_NAME     = os.getenv("SESSION_NAME", "ShizuMusic")
 PORT             = int(os.getenv("PORT", 10000))
 
 # ── API config ────────────────────────────────────────────────────────────────
-YT_API_URL        = os.environ.get("YT_API_URL", "https://yasmeen-api-bot-1.onrender.com")
+YT_API_URL        = os.environ.get("YT_API_URL", "https://yasmeen-api-bot.onrender.com")
 YT_API_KEY        = os.environ.get("YT_API_KEY", "YasmeenBot26d3fdb9be7e458c9ecf1a08")
 DOWNLOAD_DIR          = "downloads"
 YT_TOKEN_TIMEOUT  = 10    # seconds — fetch download token
