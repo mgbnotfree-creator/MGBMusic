@@ -27,7 +27,7 @@ PORT             = int(os.getenv("PORT", 10000))
 
 # ── API config ────────────────────────────────────────────────────────────────
 YT_API_URL        = os.environ.get("YT_API_URL", "https://shrutibots.site")
-YT_API_KEY        = os.environ.get("YT_API_KEY", "ShrutiBotsBdPZq5nTGk4HGRgcnaU1")  # Get from @SHRUTIAPIBOT on Telegram
+YT_API_KEY        = os.environ.get("YT_API_KEY", "Shruti")  # Get from @SHRUTIAPIBOT on Telegram
 DOWNLOAD_DIR          = "downloads"
 YT_TOKEN_TIMEOUT  = 10    # seconds — fetch download token
 YT_STREAM_TIMEOUT = 900   # 15 min  — stream long songs
