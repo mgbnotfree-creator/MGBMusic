@@ -485,10 +485,15 @@ class YouTubeAPI:
         except Exception:
             return None, False
 
-async def resolve_video_stream(link: str):
+# ── BOTH ALIASES INCLUDED TO PREVENT CRASHES ──
+async def resolve_stream(link: str):
     """Helper wrapper to resolve stream links if called externally."""
     try:
         return link, None
     except Exception:
         return None, None
+
+async def resolve_video_stream(link: str):
+    """Alias for resolve_stream to prevent import errors in different plugin versions."""
+    return await resolve_stream(link)
     
