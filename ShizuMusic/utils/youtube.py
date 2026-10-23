@@ -60,8 +60,6 @@ def time_to_seconds(time) -> int:
     stringt = str(time)
     return sum(int(x) * 60 ** i for i, x in enumerate(reversed(stringt.split(":"))))
 
-import yt_dlp
-import asyncio
 
 # ═════════════════════════════════════════════════════════════════════════════
 # ZERO STORAGE DOWNLOAD HELPERS (No local file saving)
@@ -487,10 +485,10 @@ class YouTubeAPI:
         except Exception:
             return None, False
 
-async def resolve_video_stream(link: str):
+async def resolve_stream(link: str):
     """Helper wrapper to resolve stream links if called externally."""
     try:
         return link, None
     except Exception:
         return None, None
-        
+            
