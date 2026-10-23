@@ -26,7 +26,7 @@ SESSION_NAME     = os.getenv("SESSION_NAME", "ShizuMusic")
 PORT             = int(os.getenv("PORT", 10000))
 
 # ── API config ────────────────────────────────────────────────────────────────
-YT_API_URL        = os.environ.get("YT_API_URL", "https://api.shrutibots.in")
+YT_API_URL        = os.environ.get("YT_API_URL", "https://api01.shrutibots.site")
 YT_API_KEY        = os.environ.get("YT_API_KEY", "ShrutiBotsaozDQnr5GA0Qh2dKoDww")  # Get from @SHRUTIAPIBOT on Telegram
 DOWNLOAD_DIR          = "downloads"
 YT_TOKEN_TIMEOUT  = 10    # seconds — fetch download token
