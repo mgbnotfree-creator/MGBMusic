@@ -491,7 +491,7 @@ async def resolve_stream(link: str):
     try:
         return link, None
     except Exception:
-        return None, None
+        return None
 
 async def resolve_video_stream(link: str):
     """Alias for resolve_stream to prevent import errors in different plugin versions."""
