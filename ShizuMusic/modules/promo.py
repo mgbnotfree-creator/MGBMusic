@@ -26,7 +26,7 @@ async def promo_message(client, message: Message):
     me = await client.get_me()
     bot_username = me.username
     
-    # 🎯 Aero Music स्टाइल वाला कीबोर्ड
+    # 🎯 आपके नए एकदम खतरनाक Aesthetic बटन्स
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")],
         [
@@ -46,7 +46,7 @@ async def promo_message(client, message: Message):
         " ├ ʜɪɢʜ-ǫᴜᴀʟɪᴛʏ ᴍᴜsɪᴄ ʙᴏᴛs\n"
         " ├ ᴠᴘs & ʀᴇɴᴅᴇʀ ᴅᴇᴘʟᴏʏᴍᴇɴᴛ\n"
         " └ ᴄᴜsᴛᴏᴍ ᴀᴘɪ & ᴅᴀᴛᴀʙᴀsᴇ sᴇᴛᴜᴘ\n\n"
-        "💌 ᴘᴏᴡᴇʀᴇᴅ ʙʏ : MGB NOT FREE CODER"
+        "💌 Powered by @MGB_NOT_FREE"
     )
 
     photo_to_send = None
@@ -68,7 +68,8 @@ async def promo_message(client, message: Message):
             
             if "candidates" in text_res:
                 generated_text = text_res["candidates"][0]["content"]["parts"][0]["text"]
-                promo_text = f"{generated_text}\n\n💌 ᴘᴏᴡᴇʀᴇᴅ ʙʏ : MGB NOT FREE CODER"
+                # यहाँ भी नया वाला Powered by अपडेट कर दिया है
+                promo_text = f"{generated_text}\n\n💌 Powered by @MGB_NOT_FREE"
         except Exception:
             pass # टेक्स्ट फेल हुआ तो डिफॉल्ट इस्तेमाल होगा
 
@@ -106,4 +107,4 @@ async def promo_message(client, message: Message):
         await m.delete()
     except Exception as e:
         await m.edit_text(f"❌ Promo Error: {e}")
-        
+    
