@@ -36,4 +36,5 @@ ALL_MODULES = [
     "plans",
     "promo",
     "welcome",
+    "ai",
 ]
