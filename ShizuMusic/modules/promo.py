@@ -20,7 +20,7 @@ async def promo_message(client, message: Message):
     # 1. रैंडम प्रॉम्प्ट और सीड चुनकर एक नई HD इमेज जनरेट करें
     prompt = random.choice(PROMPTS)
     encoded_prompt = urllib.parse.quote(prompt)
-    seed = random.randint(1, 1000000) # हर बार एकदम नई फोटो के लिए
+    seed = random.randint(1, 1000000)
     
     # यह जादुई लिंक हर बार 1024x1024 पिक्सल की फुल HD इमेज बनाएगा
     generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed={seed}"
@@ -37,16 +37,29 @@ async def promo_message(client, message: Message):
         "💌 ᴘᴏᴡᴇʀᴇᴅ ʙʏ : **MGB NOT FREE CODER**"
     )
     
+    # 🔥 बिल्कुल Aero Music स्टाइल वाला कीबोर्ड (1 Full, 2 Half, 1 Full)
     keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("💬 𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐎𝐰𝐧𝐞𝐫", url="https://t.me/MGB_CODER")],
-        [InlineKeyboardButton("📢 𝐉𝐨𝐢𝐧 𝐎𝐮𝐫 𝐂𝐡𝐚𝐧𝐧𝐞𝐥", url="https://t.me/RIYA_MUSIC_BOT_786")],
-        [InlineKeyboardButton("➕ 𝐀𝐝𝐝 𝐌𝐞 𝐓𝐨 𝐘𝐨𝐮𝐫 𝐆𝐫𝐨𝐮𝐩 ➕", url=f"https://t.me/{bot.me.username}?startgroup=true")]
+        # पहली लाइन: सिंगल बड़ा बटन
+        [InlineKeyboardButton("⚡ 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")],
+        
+        # दूसरी लाइन: दो छोटे बटन एक साथ (Side-by-Side)
+        [
+            InlineKeyboardButton("👑 𝐒𝐔𝐏𝐏𝐎𝐑𝐓 ↗", url="https://t.me/MGB_CODER"),
+            InlineKeyboardButton("🎁 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 ↗", url="https://t.me/RIYA_MUSIC_BOT_786")
+        ],
+        
+        # तीसरी लाइन: ऐड मी बटन
+        [InlineKeyboardButton("➕ 𝐀𝐝𝐝 𝐌𝐞 ➕", url=f"https://t.me/{bot.me.username}?startgroup=true")]
     ])
     
     try:
-        # बॉट टेलीग्राम को वह जनरेटेड इमेज भेजने को कहेगा
-        await message.reply_photo(photo=generated_image_url, caption=promo_text, reply_markup=keyboard)
-    except Exception as e:
-        # बैकअप
+        # बॉट नई AI HD फोटो और स्टाइलिश बटन्स के साथ प्रोमो भेजेगा
+        await message.reply_photo(
+            photo=generated_image_url,
+            caption=promo_text,
+            reply_markup=keyboard
+        )
+    except Exception:
+        # बैकअप: अगर इंटरनेट स्लो हुआ, तो बिना फोटो के मैसेज भेज देगा
         await message.reply_text(text=promo_text, reply_markup=keyboard)
         
