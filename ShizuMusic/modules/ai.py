@@ -270,13 +270,13 @@ async def ai_tod(client, message: Message):
         await m.edit_text(f"Error: {e}")
 
 # ==========================================
-# 10. ☕ 🜲 AI Interactive Menu (Aero Style Buttons)
+# 10. 🫧 Premium AI Interactive Menu (With Banner)
 # ==========================================
 @bot.on_message(filters.command(["aimenu", "aihelp"], prefixes=["/", "!", "."]))
 async def ai_menu(client, message: Message):
     menu_text = (
-        "☕ **MGB NOT FREE CODER - AI COMMANDS MENU** 🜲\n\n"
-        "⟡ **Available AI Features:**\n"
+        "🫧 **MGB NOT FREE CODER - AI COMMANDS MENU** 🫧\n\n"
+        "✨ **Available AI Features:**\n"
         " ├ `/ask <question>` - ChatGPT AI Chat\n"
         " ├ `/draw <prompt>` - HD AI Image Generator\n"
         " ├ `/speak <text>` - AI Voice Note (TTS)\n"
@@ -286,21 +286,28 @@ async def ai_menu(client, message: Message):
         " ├ `/baba <question>` - Funny Future Predictor\n"
         " ├ `/meme <topic>` - Dank AI Memes\n"
         " └ `/tod truth/dare` - Truth or Dare Game\n\n"
-        "♬ˎˊ˗ *Select any option below or type the command!*"
+        "💌 _Select any option below or type the command!_"
     )
     
-    # Aapke bataye gaye emojis aur Aero style buttons
+    # Premium Aesthetic Emojis aur Stylish Small-Caps Fonts
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("☕ AI Chat", callback_data="ai_chat_info"),
-            InlineKeyboardButton("⟡ AI Images", callback_data="ai_draw_info")
+            InlineKeyboardButton("🫧 ᴀɪ ᴄʜᴀᴛ 🫧", callback_data="ai_chat_info"),
+            InlineKeyboardButton("✨ ᴀɪ ɪᴍᴀɢᴇs ✨", callback_data="ai_draw_info")
         ],
         [
-            InlineKeyboardButton("🜲 Smart DJ", callback_data="ai_dj_info"),
-            InlineKeyboardButton("♬ Roast & Fun", callback_data="ai_roast_info")
+            InlineKeyboardButton("🔮 sᴍᴀʀᴛ ᴅᴊ 🔮", callback_data="ai_dj_info"),
+            InlineKeyboardButton("🎭 ʀᴏᴀsᴛ & ғᴜɴ 🎭", callback_data="ai_roast_info")
         ],
-        [InlineKeyboardButton("⚡ 𝐎𝐖𝐍𝐄𝐑 𝐂𝐎𝐍𝐓𝐀𝐂𝐓", url="https://t.me/MGB_CODER")]
+        [InlineKeyboardButton("💌 ᴏᴡɴᴇʀ ᴄᴏɴᴛᴀᴄᴛ 💌", url="https://t.me/MGB_CODER")]
     ])
     
-    await message.reply_text(menu_text, reply_markup=keyboard)
+    # 🔥 बॉस, यहाँ अपनी पसंद की इमेज का लिंक डालें (Telegra.ph या कोई भी डायरेक्ट इमेज लिंक)
+    banner_url = "https://image.pollinations.ai/prompt/cyberpunk%20hacker%20bot%20banner?width=1280&height=720&nologo=true"
+    
+    await message.reply_photo(
+        photo=banner_url,
+        caption=menu_text,
+        reply_markup=keyboard
+    )
     
