@@ -34,4 +34,6 @@ ALL_MODULES = [
     "playforce",
     "channel",
     "plans",
+    "promo",    # 👈 आपका प्रोमो फीचर
+    "welcome",  # 👈 आपका एडवांस वेलकम फीचर
 ]
