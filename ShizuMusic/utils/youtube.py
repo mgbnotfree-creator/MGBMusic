@@ -1,13 +1,15 @@
 # ═══════════════════════════════════════════════════════════════
-#                     🎵 MGB NOT FREE CODER
+#                     🎵 SHIZUMUSIC
 #
-#                   © 2026 MGB NOT FREE CODER
+#                   © 2026 BAD MUNDA
 #
-#                Developed with ❤️ by MGB Not Free Coder
+#                Developed with ❤️ by Bad Munda
 #
 #             Do not remove or alter the original credits.
 #
-#           Copyright © 2026 MGB Not Free Coder. All rights reserved.
+#           Copyright © 2026 Bad Munda. All rights reserved.
+#
+#              
 # ═══════════════════════════════════════════════════════════════
 
 import asyncio
@@ -28,6 +30,7 @@ from ShizuMusic.utils.formatters import sec_to_iso
 logger = logging.getLogger(__name__)
 
 _file_cache: dict[str, str] = {}
+_video_cache: dict[str, str] = {}
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -60,50 +63,144 @@ def time_to_seconds(time) -> int:
     stringt = str(time)
     return sum(int(x) * 60 ** i for i, x in enumerate(reversed(stringt.split(":"))))
 
-import yt_dlp
-import asyncio
 
 # ═════════════════════════════════════════════════════════════════════════════
-# ZERO STORAGE DOWNLOAD HELPERS (No local file saving)
+# DOWNLOAD HELPERS (New API — single-step direct stream)
 # ═════════════════════════════════════════════════════════════════════════════
-
-async def get_direct_url(video_id: str) -> str:
-    """yt-dlp का उपयोग करके सीधा ऑडियो स्ट्रीम URL निकालता है (बिना डाउनलोड किए)"""
-    def extract():
-        ydl_opts = {
-            'format': 'bestaudio/best',
-            'noplaylist': True,
-            'quiet': True,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
-            return info.get('url') or info.get('entries', [{}])[0].get('url')
-    
-    try:
-        # बॉट को ब्लॉक होने से बचाने के लिए अलग थ्रेड में रन करें
-        return await asyncio.to_thread(extract)
-    except Exception as e:
-        logger.error(f"[shruti] Stream extraction failed: {e}")
-        return None
 
 async def download_song(link: str) -> str:
-    """Download bypass - Returns direct stream URL instead of saving file"""
+    """Download audio via Shruti API. Returns local file path or None on failure."""
     video_id = _extract_video_id(link)
     if not video_id or len(video_id) < 3:
         return None
-    
-    logger.info(f"[shruti] Extracting direct stream URL for: {video_id} (No Download)")
-    return await get_direct_url(video_id)
+
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp3")
+
+    # Disk cache
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        return file_path
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{YT_API_URL}/download",
+                params={"url": video_id, "type": "audio", "api_key": YT_API_KEY},
+                timeout=aiohttp.ClientTimeout(total=YT_STREAM_TIMEOUT),
+            ) as resp:
+                if resp.status != 200:
+                    logger.warning(f"[shruti] Audio download failed: HTTP {resp.status}")
+                    return None
+                async with aiofiles.open(file_path, "wb") as f:
+                    async for chunk in resp.content.iter_chunked(131072):
+                        await f.write(chunk)
+
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+            return file_path
+        return None
+
+    except Exception as e:
+        logger.error(f"[shruti] download_song error: {e}")
+        _cleanup(file_path)
+        return None
+
 
 async def download_video(link: str) -> str:
-    """Download bypass - Returns direct stream URL instead of saving file"""
+    """Download video via Shruti API. Returns local file path or None on failure."""
     video_id = _extract_video_id(link)
     if not video_id or len(video_id) < 3:
         return None
-        
-    logger.info(f"[shruti] Extracting direct stream URL for: {video_id} (No Download)")
-    return await get_direct_url(video_id)
-            
+
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+    file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp4")
+
+    # Disk cache
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        return file_path
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{YT_API_URL}/download",
+                params={"url": video_id, "type": "video", "api_key": YT_API_KEY},
+                timeout=aiohttp.ClientTimeout(total=YT_STREAM_TIMEOUT),
+            ) as resp:
+                if resp.status != 200:
+                    logger.warning(f"[shruti] Video download failed: HTTP {resp.status}")
+                    return None
+                async with aiofiles.open(file_path, "wb") as f:
+                    async for chunk in resp.content.iter_chunked(131072):
+                        await f.write(chunk)
+
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+            return file_path
+        return None
+
+    except Exception as e:
+        logger.error(f"[shruti] download_video error: {e}")
+        _cleanup(file_path)
+        return None
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# PUBLIC — STREAM RESOLVER (backward-compatible)
+# ═════════════════════════════════════════════════════════════════════════════
+
+async def resolve_stream(url: str) -> str:
+    """Resolve a YouTube URL or video ID to a local audio file path."""
+    # Already a local file (e.g. Telegram audio download)
+    if os.path.exists(url) and os.path.isfile(url):
+        return url
+
+    # In-memory cache
+    if url in _file_cache and os.path.exists(_file_cache[url]):
+        logger.info("[shruti] Cache hit")
+        return _file_cache[url]
+
+    video_id  = _extract_video_id(url)
+    file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp3")
+
+    # Disk cache
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        _file_cache[url] = file_path
+        return file_path
+
+    logger.info(f"[shruti] Downloading: {video_id}")
+    downloaded = await download_song(url)
+    if downloaded:
+        _file_cache[url] = downloaded
+        logger.info(f"[shruti] Done — {os.path.getsize(downloaded) // 1024} KB")
+        return downloaded
+
+    raise Exception("Shruti API download failed. Please try again.")
+
+
+async def resolve_video_stream(url: str) -> str:
+    """Resolve a YouTube URL or video ID to a local MP4 (audio + video) file path."""
+    if os.path.exists(url) and os.path.isfile(url):
+        return url
+
+    if url in _video_cache and os.path.exists(_video_cache[url]):
+        logger.info("[shruti] Video cache hit")
+        return _video_cache[url]
+
+    video_id  = _extract_video_id(url)
+    file_path = os.path.join(DOWNLOAD_DIR, f"{video_id}.mp4")
+
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        _video_cache[url] = file_path
+        return file_path
+
+    logger.info(f"[shruti] Downloading video: {video_id}")
+    downloaded = await download_video(url)
+    if downloaded:
+        _video_cache[url] = downloaded
+        logger.info(f"[shruti] Video done — {os.path.getsize(downloaded) // 1024} KB")
+        return downloaded
+
+    raise Exception("Shruti API video download failed. Please try again.")
+
+
 # ═════════════════════════════════════════════════════════════════════════════
 # PUBLIC — YOUTUBE SEARCH / METADATA
 # ═════════════════════════════════════════════════════════════════════════════
@@ -486,10 +583,3 @@ class YouTubeAPI:
             return None, False
         except Exception:
             return None, False
-
-async def resolve_video_stream(link: str):
-    """Helper wrapper to resolve stream links if called externally."""
-    try:
-        return link, None
-    except Exception:
-        return None, None
