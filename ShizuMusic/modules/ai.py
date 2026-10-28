@@ -268,3 +268,39 @@ async def ai_tod(client, message: Message):
                     await m.edit_text("❌ Game master abhi so raha hai!")
     except Exception as e:
         await m.edit_text(f"Error: {e}")
+
+# ==========================================
+# 10. ☕ 🜲 AI Interactive Menu (Aero Style Buttons)
+# ==========================================
+@bot.on_message(filters.command(["aimenu", "aihelp"], prefixes=["/", "!", "."]))
+async def ai_menu(client, message: Message):
+    menu_text = (
+        "☕ **MGB NOT FREE CODER - AI COMMANDS MENU** 🜲\n\n"
+        "⟡ **Available AI Features:**\n"
+        " ├ `/ask <question>` - ChatGPT AI Chat\n"
+        " ├ `/draw <prompt>` - HD AI Image Generator\n"
+        " ├ `/speak <text>` - AI Voice Note (TTS)\n"
+        " ├ `/aidj <mood>` - Smart AI Music DJ\n"
+        " ├ `/roast` - Reply to message & roast\n"
+        " ├ `/flirt` or `/shayari` - Romantic Shayaris\n"
+        " ├ `/baba <question>` - Funny Future Predictor\n"
+        " ├ `/meme <topic>` - Dank AI Memes\n"
+        " └ `/tod truth/dare` - Truth or Dare Game\n\n"
+        "♬ˎˊ˗ *Select any option below or type the command!*"
+    )
+    
+    # Aapke bataye gaye emojis aur Aero style buttons
+    keyboard = InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("☕ AI Chat", callback_data="ai_chat_info"),
+            InlineKeyboardButton("⟡ AI Images", callback_data="ai_draw_info")
+        ],
+        [
+            InlineKeyboardButton("🜲 Smart DJ", callback_data="ai_dj_info"),
+            InlineKeyboardButton("♬ Roast & Fun", callback_data="ai_roast_info")
+        ],
+        [InlineKeyboardButton("⚡ 𝐎𝐖𝐍𝐄𝐑 𝐂𝐎𝐍𝐓𝐀𝐂𝐓", url="https://t.me/MGB_CODER")]
+    ])
+    
+    await message.reply_text(menu_text, reply_markup=keyboard)
+    
