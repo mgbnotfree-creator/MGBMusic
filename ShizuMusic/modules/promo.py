@@ -1,67 +1,28 @@
-import random
+import aiohttp
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from ShizuMusic import bot
 
-# 50 इमेजेस की पूरी लिस्ट (आपके प्रीमियम फ़ोटोज़ का कलेक्शन)
-PROMO_IMAGES = [
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg",
-    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
-    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
-    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://files.catbox.moe/ddzvc0.jpg"
-]
+# 🌐 यह एडवांस फंक्शन इंटरनेट से ऑटोमैटिक नई इमेज लाएगा
+async def get_random_image():
+    try:
+        async with aiohttp.ClientSession() as session:
+            # यहाँ हम Waifu Pics API का इस्तेमाल कर रहे हैं जो एकदम सेफ और बेहतरीन इमेजेस देता है
+            async with session.get("https://api.waifu.pics/sfw/waifu") as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data.get("url")
+    except Exception:
+        pass
+    # अगर API में कोई दिक्कत आई, तो यह बैकअप इमेज काम आएगी (एरर नहीं आएगा)
+    return "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg"
 
 @bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
 async def promo_message(client, message: Message):
     
-    random_img = random.choice(PROMO_IMAGES)
+    # बॉट तुरंत एक नई इमेज जनरेट कर रहा है
+    random_img = await get_random_image()
     
     promo_text = (
         "🎉 **𝐒𝐏𝐄𝐂𝐈𝐀𝐋 𝐏𝐑𝐎𝐌𝐎𝐓𝐈𝐎𝐍** 🎉\n\n"
@@ -82,6 +43,9 @@ async def promo_message(client, message: Message):
     ])
     
     try:
+        # बॉट फोटो के साथ प्रोमो भेजेगा
         await message.reply_photo(photo=random_img, caption=promo_text, reply_markup=keyboard)
-    except Exception as e:
+    except Exception:
+        # अगर कोई भी दिक्कत हुई तो बिना फोटो के सिर्फ टेक्स्ट भेज देगा
         await message.reply_text(text=promo_text, reply_markup=keyboard)
+        
