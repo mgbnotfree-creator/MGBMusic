@@ -1,43 +1,29 @@
 import random
-import aiohttp
+import urllib.parse
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from ShizuMusic import bot
 
-# 🔥 10 प्रीमियम बैकअप इमेजेस (ताकि बॉट कभी भी 1 फोटो पर न अटके!)
-BACKUP_IMAGES = [
-    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
-    "https://cdn.nekos.life/waifu/v01_020.png",
-    "https://cdn.nekos.life/waifu/v01_025.png",
-    "https://cdn.nekos.life/waifu/v01_030.png",
-    "https://cdn.nekos.life/waifu/v01_035.png",
-    "https://cdn.nekos.life/waifu/v01_040.png",
-    "https://cdn.nekos.life/waifu/v01_045.png",
-    "https://cdn.nekos.life/waifu/v01_050.png",
-    "https://cdn.nekos.life/waifu/v01_060.png",
-    "https://cdn.nekos.life/waifu/v01_070.png"
+# 🌟 HD AI प्रॉम्प्ट्स (बॉट इनके आधार पर खुद एकदम नई HD फोटो बनाएगा)
+PROMPTS = [
+    "beautiful aesthetic anime girl, 4k resolution, highly detailed, masterpiece",
+    "cute anime girl in cyber neon city, 8k quality, glowing aesthetic",
+    "gorgeous anime waifu, sunset lighting, studio quality, hd",
+    "aesthetic anime girl profile picture, lo-fi background, 4k",
+    "anime girl with sword, dark aesthetic, extremely detailed, hd"
 ]
-
-# 🌐 सुपरफास्ट API जो Telegram सपोर्ट करता है
-async def get_random_image():
-    try:
-        async with aiohttp.ClientSession() as session:
-            # यहाँ हमने ज़्यादा सेफ Nekos.life API लगा दिया है
-            async with session.get("https://nekos.life/api/v2/img/waifu") as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    return data.get("url")
-    except Exception:
-        pass
-    # अगर API फेल हुआ, तो बॉट ऊपर दी गई 10 इमेजेस में से कोई एक रैंडम फोटो उठा लेगा
-    return random.choice(BACKUP_IMAGES)
 
 @bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
 async def promo_message(client, message: Message):
     
-    # बॉट तुरंत एक नई इमेज जनरेट कर रहा है
-    random_img = await get_random_image()
+    # 1. रैंडम प्रॉम्प्ट और सीड चुनकर एक नई HD इमेज जनरेट करें
+    prompt = random.choice(PROMPTS)
+    encoded_prompt = urllib.parse.quote(prompt)
+    seed = random.randint(1, 1000000) # हर बार एकदम नई फोटो के लिए
+    
+    # यह जादुई लिंक हर बार 1024x1024 पिक्सल की फुल HD इमेज बनाएगा
+    generated_image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed={seed}"
     
     promo_text = (
         "🎉 **𝐒𝐏𝐄𝐂𝐈𝐀𝐋 𝐏𝐑𝐎𝐌𝐎𝐓𝐈𝐎𝐍** 🎉\n\n"
@@ -58,7 +44,9 @@ async def promo_message(client, message: Message):
     ])
     
     try:
-        await message.reply_photo(photo=random_img, caption=promo_text, reply_markup=keyboard)
-    except Exception:
+        # बॉट टेलीग्राम को वह जनरेटेड इमेज भेजने को कहेगा
+        await message.reply_photo(photo=generated_image_url, caption=promo_text, reply_markup=keyboard)
+    except Exception as e:
+        # बैकअप
         await message.reply_text(text=promo_text, reply_markup=keyboard)
         
