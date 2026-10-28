@@ -1,21 +1,36 @@
+import random
 import aiohttp
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from ShizuMusic import bot
 
-# 🌐 यह फंक्शन इंटरनेट से ऑटोमैटिक नई इमेज लाएगा (Welcome के लिए)
+# 🔥 10 प्रीमियम बैकअप इमेजेस (ताकि वेलकम भी कभी 1 फोटो पर न अटके!)
+BACKUP_IMAGES = [
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://cdn.nekos.life/waifu/v01_020.png",
+    "https://cdn.nekos.life/waifu/v01_025.png",
+    "https://cdn.nekos.life/waifu/v01_030.png",
+    "https://cdn.nekos.life/waifu/v01_035.png",
+    "https://cdn.nekos.life/waifu/v01_040.png",
+    "https://cdn.nekos.life/waifu/v01_045.png",
+    "https://cdn.nekos.life/waifu/v01_050.png",
+    "https://cdn.nekos.life/waifu/v01_060.png",
+    "https://cdn.nekos.life/waifu/v01_070.png"
+]
+
+# 🌐 सुपरफास्ट API जो हर नए मेंबर के लिए नई फोटो लाएगा
 async def get_random_image():
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get("https://api.waifu.pics/sfw/waifu") as resp:
+            async with session.get("https://nekos.life/api/v2/img/waifu") as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return data.get("url")
     except Exception:
         pass
-    # अगर इंटरनेट डाउन हुआ, तो बैकअप के लिए आपकी पहली इमेज जाएगी
-    return "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg"
+    # अगर API फेल हुआ, तो बॉट 10 बैकअप इमेजेस में से कोई एक रैंडम फोटो उठा लेगा
+    return random.choice(BACKUP_IMAGES)
 
 # जब भी कोई नया मेंबर ग्रुप में आएगा
 @bot.on_message(filters.new_chat_members)
@@ -40,7 +55,7 @@ async def welcome_new_member(client, message: Message):
         )
         
         keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("📢 𝐉𝐨𝐢𝐧 𝐎𝐮𝐫 𝐂𝐡𝐚𝐧𝐧𝐞𝐥", url="https://t.me/RIYA_MUSIC_BOT_786")],
+            [InlineKeyboardButton("📢 𝐉𝐨𝐢𝐧 𝐎𝐮𝐫 𝐂𝐡𝐚𝐧nel", url="https://t.me/RIYA_MUSIC_BOT_786")],
             [InlineKeyboardButton("💬 𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐎𝐰𝐧𝐞𝐫", url="https://t.me/MGB_CODER")]
         ])
         
@@ -52,6 +67,6 @@ async def welcome_new_member(client, message: Message):
                 reply_markup=keyboard
             )
         except Exception:
-            # अगर कोई भी दिक्कत हुई तो बिना फोटो के सिर्फ टेक्स्ट भेज देगा (एरर नहीं आएगा)
+            # अगर कोई भी दिक्कत हुई तो बिना फोटो के सिर्फ टेक्स्ट भेज देगा
             await message.reply_text(text=welcome_text, reply_markup=keyboard)
             
