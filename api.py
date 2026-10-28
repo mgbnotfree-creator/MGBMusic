@@ -1,55 +1,50 @@
-import aiohttp
-import config
+import os
+import google.generativeai as genai
+from pyrogram import filters
+from pyrogram.types import Message
+from ShizuMusic import bot
 
-class APIProvider:
-    def __init__(self):
-        self.base_url = config.YT_API_URL
-        self.api_key = config.YT_API_KEY
-        self.plans = {
-            "free": {"price": 0, "limit": 100},
-            "lite": {"price": 49, "limit": 1500},
-            "basic": {"price": 79, "limit": 3000},
-            "starter": {"price": 99, "limit": 5000},
-            "standard": {"price": 199, "limit": 10000},
-            "pro": {"price": 329, "limit": 25000},
-            "business": {"price": 569, "limit": 50000},
-            "enterprise": {"price": 1099, "limit": 100000},
-        }
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
-    async def fetch_track(self, query: str):
-        """
-        ShrutiBots API provider के ज़रिए गाने या ट्रैक की डिटेल्स सर्च और फेच करने का फंक्शन।
-        """
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
+# 🔥 404 Error Fix: gemini-1.5-flash की जगह gemini-pro कर दिया है
+chat_model = genai.GenerativeModel("gemini-pro")
+
+@bot.on_message(filters.command(["ask", "chat"], prefixes=["/", "!", "."]))
+async def gemini_ask(client, message: Message):
+    if not GEMINI_API_KEY:
+        return await message.reply_text("❌ **Error:** Gemini API Key Render par set nahi hai!")
+    if len(message.command) < 2:
+        return await message.reply_text("✨ **Usage:** `/ask <सवाल>`")
+    
+    query = message.text.split(None, 1)[1]
+    m = await message.reply_text("⏳ **Gemini सोच रहा है...** 🫧")
+    
+    try:
+        response = chat_model.generate_content(f"Answer concisely in Hinglish or English: {query}")
+        await m.edit_text(f"🫧 **MGB AI:**\n\n{response.text}\n\n✨ _Powered by MGB NOT FREE CODER_")
+    except Exception as e:
+        await m.edit_text(f"❌ **Error:** `{e}`")
+
+# 🔥 Image Error Fix: Superfast Direct API का इस्तेमाल (बिना क्रैश के)
+@bot.on_message(filters.command(["draw", "imagine"], prefixes=["/", "!", "."]))
+async def fast_draw(client, message: Message):
+    if len(message.command) < 2:
+        return await message.reply_text("✨ **Usage:** `/draw <prompt>`")
+
+    prompt = message.text.split(None, 1)[1]
+    m = await message.reply_text("🎨 **Image बना रहा है...** 🫧")
+    
+    try:
+        formatted_prompt = prompt.replace(" ", "%20")
+        image_url = f"https://image.pollinations.ai/prompt/{formatted_prompt}?width=1024&height=1024&nologo=true"
         
-        payload = {
-            "query": query
-        }
-
-        async with aiohttp.ClientSession() as session:
-            try:
-                async with session.post(
-                    f"{self.base_url}/search", 
-                    json=payload, 
-                    headers=headers, 
-                    timeout=config.YT_TOKEN_TIMEOUT
-                ) as response:
-                    if response.status == 200:
-                        return await response.json()
-                    else:
-                        return None
-            except Exception as e:
-                print(f"[API Provider Error] Failed to fetch track: {e}")
-                return None
-
-    def get_plan_details(self, plan_name: str):
-        """
-        दिए गए प्लान का नाम और उसकी डेली लिमिट्स रिटर्न करता है।
-        """
-        return self.plans.get(plan_name.lower(), self.plans["free"])
-
-# Instance create karein taaki baaki modules mein seedha import kiya ja sake
-api_client = APIProvider()
+        await message.reply_photo(
+            photo=image_url, 
+            caption=f"🎨 **Prompt:** `{prompt}`\n\n✨ **Powered by MGB NOT FREE CODER**"
+        )
+        await m.delete()
+    except Exception as e:
+        await m.edit_text(f"❌ **Image Error:** `{e}`")
+        
