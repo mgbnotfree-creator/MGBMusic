@@ -1,22 +1,37 @@
+import random
 import aiohttp
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
 from ShizuMusic import bot
 
-# 🌐 यह एडवांस फंक्शन इंटरनेट से ऑटोमैटिक नई इमेज लाएगा
+# 🔥 10 प्रीमियम बैकअप इमेजेस (ताकि बॉट कभी भी 1 फोटो पर न अटके!)
+BACKUP_IMAGES = [
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://cdn.nekos.life/waifu/v01_020.png",
+    "https://cdn.nekos.life/waifu/v01_025.png",
+    "https://cdn.nekos.life/waifu/v01_030.png",
+    "https://cdn.nekos.life/waifu/v01_035.png",
+    "https://cdn.nekos.life/waifu/v01_040.png",
+    "https://cdn.nekos.life/waifu/v01_045.png",
+    "https://cdn.nekos.life/waifu/v01_050.png",
+    "https://cdn.nekos.life/waifu/v01_060.png",
+    "https://cdn.nekos.life/waifu/v01_070.png"
+]
+
+# 🌐 सुपरफास्ट API जो Telegram सपोर्ट करता है
 async def get_random_image():
     try:
         async with aiohttp.ClientSession() as session:
-            # यहाँ हम Waifu Pics API का इस्तेमाल कर रहे हैं जो एकदम सेफ और बेहतरीन इमेजेस देता है
-            async with session.get("https://api.waifu.pics/sfw/waifu") as resp:
+            # यहाँ हमने ज़्यादा सेफ Nekos.life API लगा दिया है
+            async with session.get("https://nekos.life/api/v2/img/waifu") as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return data.get("url")
     except Exception:
         pass
-    # अगर API में कोई दिक्कत आई, तो यह बैकअप इमेज काम आएगी (एरर नहीं आएगा)
-    return "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg"
+    # अगर API फेल हुआ, तो बॉट ऊपर दी गई 10 इमेजेस में से कोई एक रैंडम फोटो उठा लेगा
+    return random.choice(BACKUP_IMAGES)
 
 @bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
 async def promo_message(client, message: Message):
@@ -43,9 +58,7 @@ async def promo_message(client, message: Message):
     ])
     
     try:
-        # बॉट फोटो के साथ प्रोमो भेजेगा
         await message.reply_photo(photo=random_img, caption=promo_text, reply_markup=keyboard)
     except Exception:
-        # अगर कोई भी दिक्कत हुई तो बिना फोटो के सिर्फ टेक्स्ट भेज देगा
         await message.reply_text(text=promo_text, reply_markup=keyboard)
         
