@@ -7,7 +7,8 @@ from ShizuMusic import bot
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    promo_model = genai.GenerativeModel("gemini-1.5-flash")
+    # 🔥 404 Error Fix:
+    promo_model = genai.GenerativeModel("gemini-pro")
 
 @bot.on_message(filters.command(["promo", "offers"], prefixes=["/", "!", "."]))
 async def ai_promo(client, message: Message):
