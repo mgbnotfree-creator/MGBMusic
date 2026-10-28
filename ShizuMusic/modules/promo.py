@@ -1,8 +1,8 @@
 import random
-from pyrogram import filters
+from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
-from ShizuMusic import app  # 👈 यह सबसे ज़रूरी लाइन है, जो बॉट को कनेक्ट करेगी
 
+# 6 खूबसूरत फ़ोटोज़
 PROMO_IMAGES = [
     "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
     "https://files.catbox.moe/ddzvc0.jpg",
@@ -12,9 +12,9 @@ PROMO_IMAGES = [
     "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg"
 ]
 
-# ✅ यहाँ Client की जगह app.on_message लगा दिया गया है
-@app.on_message(filters.command(["promo", "promotion"]) & filters.user(8853897167))
-async def promo_message(client, message: Message):
+# यहाँ हमने वापस Client लगा दिया है जो कभी क्रैश नहीं होता
+@Client.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]))
+async def promo_message(client: Client, message: Message):
     
     random_img = random.choice(PROMO_IMAGES)
     
@@ -33,8 +33,7 @@ async def promo_message(client, message: Message):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("💬 𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐎𝐰𝐧𝐞𝐫", url="https://t.me/MGB_CODER")],
         [InlineKeyboardButton("📢 𝐉𝐨𝐢𝐧 𝐎𝐮𝐫 𝐂𝐡𝐚𝐧𝐧𝐞𝐥", url="https://t.me/RIYA_MUSIC_BOT_786")],
-        # मैंने यहाँ सीधा आपके बॉट का यूजरनेम डाल दिया है ताकि कोई एरर न आए
-        [InlineKeyboardButton("➕ 𝐀𝐝𝐝 𝐌𝐞 𝐓𝐨 𝐘𝐨𝐮𝐫 𝐆𝐫𝐨𝐮𝐩 ➕", url="https://t.me/MGB_NOT_FREE_BOSS_BOT?startgroup=true")]
+        [InlineKeyboardButton("➕ 𝐀𝐝𝐝 𝐌𝐞 𝐓𝐨 𝐘𝐨𝐮𝐫 𝐆𝐫𝐨𝐮𝐩 ➕", url=f"https://t.me/{client.me.username}?startgroup=true")]
     ])
     
     try:
