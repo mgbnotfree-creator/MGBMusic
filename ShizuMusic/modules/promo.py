@@ -2,18 +2,62 @@ import random
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
-from ShizuMusic import bot  # 👈 असली जादुई लाइन यहाँ है!
+from ShizuMusic import bot
 
+# 50 इमेजेस की पूरी लिस्ट (आपके प्रीमियम फ़ोटोज़ का कलेक्शन)
 PROMO_IMAGES = [
     "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
     "https://files.catbox.moe/ddzvc0.jpg",
     "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
     "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
     "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
-    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg"
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg",
+    "https://telegra.ph/file/32b0c30953a9cd8ea265a.jpg",
+    "https://telegra.ph/file/71f652b415b3c5825cfd3.jpg",
+    "https://telegra.ph/file/82633010b9fdb823ddf81.jpg",
+    "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg",
+    "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
+    "https://files.catbox.moe/ddzvc0.jpg"
 ]
 
-# Client की जगह bot का इस्तेमाल (Owner ID लॉक के साथ)
 @bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
 async def promo_message(client, message: Message):
     
@@ -38,11 +82,6 @@ async def promo_message(client, message: Message):
     ])
     
     try:
-        await message.reply_photo(
-            photo=random_img,
-            caption=promo_text,
-            reply_markup=keyboard
-        )
+        await message.reply_photo(photo=random_img, caption=promo_text, reply_markup=keyboard)
     except Exception as e:
-        await message.reply_text(f"Error: {e}")
-        
+        await message.reply_text(text=promo_text, reply_markup=keyboard)
