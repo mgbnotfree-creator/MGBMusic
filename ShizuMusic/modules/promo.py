@@ -1,8 +1,9 @@
 import random
-from pyrogram import Client, filters
+from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 
-# 6 खूबसूरत फ़ोटोज़
+from ShizuMusic import bot  # 👈 असली जादुई लाइन यहाँ है!
+
 PROMO_IMAGES = [
     "https://graph.org/file/e50ded8572d76cf86256b-5c067cde3b2e25017c.jpg",
     "https://files.catbox.moe/ddzvc0.jpg",
@@ -12,9 +13,9 @@ PROMO_IMAGES = [
     "https://telegra.ph/file/8b1e42817ce8c94622c81.jpg"
 ]
 
-# यहाँ हमने वापस Client लगा दिया है जो कभी क्रैश नहीं होता
-@Client.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]))
-async def promo_message(client: Client, message: Message):
+# Client की जगह bot का इस्तेमाल (Owner ID लॉक के साथ)
+@bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
+async def promo_message(client, message: Message):
     
     random_img = random.choice(PROMO_IMAGES)
     
@@ -33,7 +34,7 @@ async def promo_message(client: Client, message: Message):
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("💬 𝐂𝐨𝐧𝐭𝐚𝐜𝐭 𝐎𝐰𝐧𝐞𝐫", url="https://t.me/MGB_CODER")],
         [InlineKeyboardButton("📢 𝐉𝐨𝐢𝐧 𝐎𝐮𝐫 𝐂𝐡𝐚𝐧𝐧𝐞𝐥", url="https://t.me/RIYA_MUSIC_BOT_786")],
-        [InlineKeyboardButton("➕ 𝐀𝐝𝐝 𝐌𝐞 𝐓𝐨 𝐘𝐨𝐮𝐫 𝐆𝐫𝐨𝐮𝐩 ➕", url=f"https://t.me/{client.me.username}?startgroup=true")]
+        [InlineKeyboardButton("➕ 𝐀𝐝𝐝 𝐌𝐞 𝐓𝐨 𝐘𝐨𝐮𝐫 𝐆𝐫𝐨𝐮𝐩 ➕", url=f"https://t.me/{bot.me.username}?startgroup=true")]
     ])
     
     try:
