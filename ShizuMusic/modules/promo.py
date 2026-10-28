@@ -1,6 +1,6 @@
 import os
 import random
-import requests
+import aiohttp
 import base64
 from io import BytesIO
 from pyrogram import filters
@@ -9,7 +9,7 @@ from ShizuMusic import bot
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# 🌟 HD AI प्रॉम्प्ट्स (Gemini Imagen 3 इन प्रॉम्प्ट्स से फोटो बनाएगा)
+# 🌟 HD AI प्रॉम्प्ट्स (Pure Gemini Imagen 3 के लिए)
 PROMPTS = [
     "beautiful aesthetic anime girl, 4k resolution, highly detailed, masterpiece",
     "cute anime girl in cyber neon city, 8k quality, glowing aesthetic",
@@ -20,7 +20,7 @@ PROMPTS = [
 
 @bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
 async def promo_message(client, message: Message):
-    m = await message.reply_text("⏳ **Gemini AI HD Promo बना रहा है... थोड़ा इंतज़ार करें!** ✨")
+    m = await message.reply_text("⏳ **Gemini AI HD Promo बना रहा है... Please wait!** 🕸️")
     
     # 🔥 Client से बॉट का असली यूज़रनेम निकालना (Crash Fix)
     me = await client.get_me()
@@ -50,49 +50,55 @@ async def promo_message(client, message: Message):
     )
 
     photo_to_send = None
+    img_err_msg = ""
 
     if GEMINI_API_KEY:
-        # ==========================================
-        # 1. GEMINI AI TEXT GENERATOR (Caption)
-        # ==========================================
-        try:
-            text_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
-            text_prompt = (
-                "Write a highly engaging and aesthetic Telegram promotional message for 'MGB NOT FREE CODER'. "
-                "Highlight services: Premium Music Bots, AI Bots, Render Deployment, and Custom APIs. "
-                "Use aesthetic emojis, stylish formatting, and professional Hinglish. Keep it concise. "
-                "Do not use bold markdown for the main title."
-            )
-            text_data = {"contents": [{"parts": [{"text": text_prompt}]}]}
-            text_res = requests.post(text_url, headers={'Content-Type': 'application/json'}, json=text_data).json()
-            
-            if "candidates" in text_res:
-                generated_text = text_res["candidates"][0]["content"]["parts"][0]["text"]
-                # यहाँ भी नया वाला Powered by अपडेट कर दिया है
-                promo_text = f"{generated_text}\n\n💌 Powered by @MGB_NOT_FREE"
-        except Exception:
-            pass # टेक्स्ट फेल हुआ तो डिफॉल्ट इस्तेमाल होगा
+        async with aiohttp.ClientSession() as session:
+            # ==========================================
+            # 1. SUPERFAST TEXT GENERATOR (gemini-1.5-flash)
+            # ==========================================
+            try:
+                text_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+                text_prompt = (
+                    "Write a highly engaging and aesthetic Telegram promotional message for 'MGB NOT FREE CODER'. "
+                    "Highlight services: Premium Music Bots, AI Bots, Render Deployment, and Custom APIs. "
+                    "Use aesthetic emojis, stylish formatting, and professional Hinglish. Keep it concise. "
+                    "Do not use bold markdown for the main title."
+                )
+                text_data = {"contents": [{"parts": [{"text": text_prompt}]}]}
+                
+                async with session.post(text_url, headers={'Content-Type': 'application/json'}, json=text_data) as t_res:
+                    if t_res.status == 200:
+                        t_json = await t_res.json()
+                        if "candidates" in t_json:
+                            generated_text = t_json["candidates"][0]["content"]["parts"][0]["text"]
+                            promo_text = f"{generated_text}\n\n💌 Powered by @MGB_NOT_FREE"
+            except Exception:
+                pass # अगर टेक्स्ट फेल हुआ तो पुराना Fallback यूज़ करेगा
 
-        # ==========================================
-        # 2. GEMINI IMAGEN AI (Image Generator)
-        # ==========================================
-        try:
-            img_prompt = random.choice(PROMPTS)
-            img_url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={GEMINI_API_KEY}"
-            img_data = {
-                "instances": [{"prompt": img_prompt}],
-                "parameters": {"sampleCount": 1}
-            }
-            img_res = requests.post(img_url, headers={'Content-Type': 'application/json'}, json=img_data).json()
-            
-            if "predictions" in img_res:
-                # Gemini की इमेज Base64 फॉर्मेट में आती है, इसे डिकोड करके फोटो में बदलेंगे
-                b64_img = img_res["predictions"][0]["bytesBase64Encoded"]
-                photo_bytes = base64.b64decode(b64_img)
-                photo_to_send = BytesIO(photo_bytes)
-                photo_to_send.name = "mgb_promo.jpg"
-        except Exception:
-            pass # अगर इमेज फेल हुई तो सिर्फ टेक्स्ट जाएगा
+            # ==========================================
+            # 2. IMAGE GENERATOR (Imagen 3)
+            # ==========================================
+            try:
+                img_prompt = random.choice(PROMPTS)
+                img_url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={GEMINI_API_KEY}"
+                img_data = {
+                    "instances": [{"prompt": img_prompt}],
+                    "parameters": {"sampleCount": 1}
+                }
+                
+                async with session.post(img_url, headers={'Content-Type': 'application/json'}, json=img_data) as i_res:
+                    if i_res.status == 200:
+                        i_json = await i_res.json()
+                        if "predictions" in i_json:
+                            b64_img = i_json["predictions"][0]["bytesBase64Encoded"]
+                            photo_bytes = base64.b64decode(b64_img)
+                            photo_to_send = BytesIO(photo_bytes)
+                            photo_to_send.name = "mgb_promo.jpg"
+                    else:
+                        img_err_msg = f"\n\n_(Note: Image Generation Blocked by Google API - {i_res.status})_"
+            except Exception:
+                pass
 
     # ==========================================
     # 3. फाइनल मैसेज भेजना
@@ -102,8 +108,8 @@ async def promo_message(client, message: Message):
             # Gemini ने फोटो बना ली है
             await message.reply_photo(photo=photo_to_send, caption=promo_text, reply_markup=keyboard)
         else:
-            # बिना फोटो के सिर्फ टेक्स्ट भेजेगा
-            await message.reply_text(text=promo_text, reply_markup=keyboard)
+            # बिना फोटो के सिर्फ टेक्स्ट भेजेगा (और अगर इमेज में एरर था तो बता देगा)
+            await message.reply_text(text=promo_text + img_err_msg, reply_markup=keyboard)
         await m.delete()
     except Exception as e:
         await m.edit_text(f"❌ Promo Error: {e}")
