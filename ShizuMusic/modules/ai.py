@@ -4,12 +4,12 @@ from pyrogram import filters
 from pyrogram.types import Message
 from ShizuMusic import bot
 
-# Render से सुरक्षित तरीके से API Key उठाएगा
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
 
-chat_model = genai.GenerativeModel("gemini-1.5-flash")
+# 🔥 404 Error Fix: gemini-1.5-flash की जगह gemini-pro कर दिया है
+chat_model = genai.GenerativeModel("gemini-pro")
 
 @bot.on_message(filters.command(["ask", "chat"], prefixes=["/", "!", "."]))
 async def gemini_ask(client, message: Message):
@@ -27,22 +27,23 @@ async def gemini_ask(client, message: Message):
     except Exception as e:
         await m.edit_text(f"❌ **Error:** `{e}`")
 
+# 🔥 Image Error Fix: Superfast Direct API का इस्तेमाल (बिना क्रैश के)
 @bot.on_message(filters.command(["draw", "imagine"], prefixes=["/", "!", "."]))
-async def gemini_draw(client, message: Message):
-    if not GEMINI_API_KEY:
-        return await message.reply_text("❌ **Error:** Gemini API Key set nahi hai!")
+async def fast_draw(client, message: Message):
     if len(message.command) < 2:
         return await message.reply_text("✨ **Usage:** `/draw <prompt>`")
 
     prompt = message.text.split(None, 1)[1]
-    m = await message.reply_text("🎨 **Gemini AI image बना रहा है...** 🫧")
-
+    m = await message.reply_text("🎨 **Image बना रहा है...** 🫧")
+    
     try:
-        imagen = genai.ImageGenerationModel("imagen-3.0-generate-001")
-        result = imagen.generate_images(prompt=prompt, number_of_images=1, aspect_ratio="1:1")
+        formatted_prompt = prompt.replace(" ", "%20")
+        image_url = f"https://image.pollinations.ai/prompt/{formatted_prompt}?width=1024&height=1024&nologo=true"
         
-        for image in result.images:
-            await message.reply_photo(photo=image._image_bytes, caption=f"🎨 **Prompt:** `{prompt}`\n\n✨ **Powered by MGB NOT FREE CODER**")
+        await message.reply_photo(
+            photo=image_url, 
+            caption=f"🎨 **Prompt:** `{prompt}`\n\n✨ **Powered by MGB NOT FREE CODER**"
+        )
         await m.delete()
     except Exception as e:
         await m.edit_text(f"❌ **Image Error:** `{e}`")
