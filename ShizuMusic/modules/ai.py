@@ -1,187 +1,281 @@
 import os
-import requests
+import aiohttp
+import base64
+from io import BytesIO
 from gtts import gTTS
 from pyrogram import filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
+
 from ShizuMusic import bot
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # ==========================================
-# 🧠 GEMINI DIRECT API HELPER
+# 🧠 GEMINI ASYNC HELPERS (Text & Image)
 # ==========================================
-def get_gemini_response(prompt):
+async def fetch_gemini_text(prompt, system_prompt=""):
     if not GEMINI_API_KEY:
         return "❌ **Error:** Gemini API Key Render par set nahi hai!"
+    
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={GEMINI_API_KEY}"
-    headers = {'Content-Type': 'application/json'}
-    data = {"contents": [{"parts": [{"text": prompt}]}]}
+    full_prompt = f"{system_prompt}\n\nUser Request: {prompt}" if system_prompt else prompt
+    data = {"contents": [{"parts": [{"text": full_prompt}]}]}
+    
     try:
-        response = requests.post(url, headers=headers, json=data)
-        result = response.json()
-        if "candidates" in result:
-            return result["candidates"][0]["content"]["parts"][0]["text"]
-        else:
-            return f"❌ **API Error:** {result.get('error', {}).get('message', 'Unknown Error')}"
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers={'Content-Type': 'application/json'}, json=data) as resp:
+                if resp.status == 200:
+                    result = await resp.json()
+                    if "candidates" in result:
+                        return result["candidates"][0]["content"]["parts"][0]["text"]
+                return "❌ **API Error:** Server abhi busy hai!"
     except Exception as e:
         return f"❌ **Error:** `{e}`"
+    return "❌ **Unknown Error Occurred.**"
+
+async def fetch_gemini_image(prompt):
+    if not GEMINI_API_KEY:
+        return None
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key={GEMINI_API_KEY}"
+    data = {
+        "instances": [{"prompt": prompt}],
+        "parameters": {"sampleCount": 1}
+    }
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, headers={'Content-Type': 'application/json'}, json=data) as resp:
+                if resp.status == 200:
+                    result = await resp.json()
+                    if "predictions" in result:
+                        b64_img = result["predictions"][0]["bytesBase64Encoded"]
+                        photo_bytes = base64.b64decode(b64_img)
+                        photo_io = BytesIO(photo_bytes)
+                        photo_io.name = "mgb_ai_image.jpg"
+                        return photo_io
+    except Exception:
+        return None
+    return None
 
 # ==========================================
-# 🤖 OLD FEATURE: AUTO CHATBOT (REPLY/MENTION)
+# 1. 🤖 AI Chatbot (ChatGPT Style)
 # ==========================================
-@bot.on_message(filters.text & ~filters.bot & ~filters.command(["ask", "draw", "speak", "aidj", "roast", "flirt", "shayari", "baba", "tod", "aimenu"]))
-async def auto_chatbot(client, message: Message):
-    bot_user = await client.get_me()
-    
-    # Check if bot is replied to OR mentioned
-    is_replied = message.reply_to_message and message.reply_to_message.from_user.id == bot_user.id
-    is_mentioned = message.text and f"@{bot_user.username}" in message.text
-    
-    if is_replied or is_mentioned:
-        prompt = f"You are a cool, aesthetic Telegram bot named 'MGB NOT FREE CODER'. Reply in a friendly, short, and natural Hinglish way to this user's message: '{message.text}'"
-        reply = get_gemini_response(prompt)
-        await message.reply_text(f"🫧 {reply}")
-
-# ==========================================
-# 1. 🫧 AI CHAT COMMAND (/ask)
-# ==========================================
-@bot.on_message(filters.command(["ask", "chat"], prefixes=["/", "!", "."]))
-async def gemini_ask(client, message: Message):
+@bot.on_message(filters.command(["ask", "ai", "chat"], prefixes=["/", "!", "."]))
+async def ai_chat(client, message: Message):
     if len(message.command) < 2:
-        return await message.reply_text("✨ **Usage:** `/ask <सवाल>`")
+        return await message.reply_text("✦ Boss, koi sawal pucho!\nExample: `/ask Who is Elon Musk?`")
+    
     query = message.text.split(None, 1)[1]
-    m = await message.reply_text("⏳ **Gemini सोच रहा है...** 🫧")
-    reply = get_gemini_response(f"Answer concisely in Hinglish or English: {query}")
-    await m.edit_text(f"🫧 **MGB AI:**\n\n{reply}\n\n✨ _Powered by MGB NOT FREE CODER_")
+    system = "You are a smart AI assistant created by MGB NOT FREE CODER. Answer politely and concisely in Hinglish."
+    
+    m = await message.reply_text("🔄 **MGB AI soch raha hai...** ✦")
+    answer = await fetch_gemini_text(query, system)
+    await m.edit_text(f"𓆩🤖𓆪 **MGB AI:**\n\n{answer}\n\n💌 Powered by @MGB_NOT_FREE")
 
 # ==========================================
-# 2. 🎨 AI IMAGE GENERATOR (/draw)
+# 2. 🎨 AI Image Creator (Gemini Imagen 3)
 # ==========================================
 @bot.on_message(filters.command(["draw", "imagine"], prefixes=["/", "!", "."]))
-async def fast_draw(client, message: Message):
+async def ai_draw(client, message: Message):
     if len(message.command) < 2:
-        return await message.reply_text("✨ **Usage:** `/draw <prompt>`")
+        return await message.reply_text("✦ Boss, kya banwana hai?\nExample: `/draw a flying car in cyber city`")
+    
     prompt = message.text.split(None, 1)[1]
-    m = await message.reply_text("🎨 **Image बना रहा है...** 🫧")
-    try:
-        formatted_prompt = prompt.replace(" ", "%20")
-        image_url = f"https://image.pollinations.ai/prompt/{formatted_prompt}?width=1024&height=1024&nologo=true"
-        await message.reply_photo(photo=image_url, caption=f"🎨 **Prompt:** `{prompt}`\n\n✨ **Powered by MGB NOT FREE CODER**")
-        await m.delete()
-    except Exception as e:
-        await m.edit_text(f"❌ **Image Error:** `{e}`")
+    m = await message.reply_text("🎨 **MGB AI Gemini se aapki photo bana raha hai... Please wait!** 🕸️")
+    
+    photo_io = await fetch_gemini_image(prompt)
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    
+    if photo_io:
+        try:
+            await message.reply_photo(
+                photo=photo_io, 
+                caption=f"🎨 **Prompt:** {prompt}\n\n💌 Powered by @MGB_NOT_FREE",
+                reply_markup=keyboard
+            )
+            await m.delete()
+        except Exception:
+            await m.edit_text("❌ Photo bhejne mein dikkat aayi!")
+    else:
+        await m.edit_text("❌ **Gemini AI Image Error!** (Shayad prompt safety rules ke khilaf hai)")
 
 # ==========================================
-# 3. 🎙️ AI VOICE NOTE (/speak)
+# 3. 🔊 AI Voice Note (Text-to-Speech)
 # ==========================================
 @bot.on_message(filters.command(["speak", "tts"], prefixes=["/", "!", "."]))
-async def speak_text(client, message: Message):
+async def ai_speak(client, message: Message):
     if len(message.command) < 2:
-        return await message.reply_text("✨ **Usage:** `/speak <text>`")
+        return await message.reply_text("✦ Boss, kya bolwana hai?\nExample: `/speak MGB Not Free Coder is the best!`")
+    
     text = message.text.split(None, 1)[1]
-    m = await message.reply_text("🎙️ **Voice record kar raha hu...** 🫧")
+    m = await message.reply_text("🗣️ **MGB AI bol raha hai...** ✦")
+    
     try:
-        tts = gTTS(text, lang='hi')
-        tts.save("voice.mp3")
-        await message.reply_voice("voice.mp3", caption="✨ **Powered by MGB NOT FREE CODER**")
-        os.remove("voice.mp3")
+        tts = gTTS(text=text, lang='hi')
+        file_name = f"voice_{message.from_user.id}.mp3"
+        tts.save(file_name)
+        
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+        
+        await message.reply_voice(
+            voice=file_name, 
+            caption="💌 Powered by @MGB_NOT_FREE",
+            reply_markup=keyboard
+        )
         await m.delete()
+        
+        if os.path.exists(file_name):
+            os.remove(file_name)
     except Exception as e:
-        await m.edit_text(f"❌ **Voice Error:** `{e}`")
+        await m.edit_text(f"❌ Voice banane mein error aayi: {e}")
 
 # ==========================================
-# 4. 🎧 SMART AI DJ (/aidj)
+# 4. 🎵 AI Smart DJ (Mood Music Suggestions)
 # ==========================================
-@bot.on_message(filters.command(["aidj", "dj"], prefixes=["/", "!", "."]))
-async def smart_dj(client, message: Message):
+@bot.on_message(filters.command(["aidj", "mood"], prefixes=["/", "!", "."]))
+async def ai_dj(client, message: Message):
     if len(message.command) < 2:
-        return await message.reply_text("✨ **Usage:** `/aidj <mood/feeling>`\nExample: `/aidj romantic`")
+        return await message.reply_text("✦ Boss, mood kaisa hai?\nExample: `/aidj romantic` or `/aidj sad`")
+    
     mood = message.text.split(None, 1)[1]
-    m = await message.reply_text("🎧 **MGB DJ playlist bana raha hai...** 🎶")
-    reply = get_gemini_response(f"Suggest 3 best Bollywood/Punjabi songs for '{mood}' mood. Just give names and singers with emojis. No long explanations.")
-    await m.edit_text(f"🎧 **SMART DJ ({mood}):**\n\n{reply}\n\n✨ _Powered by MGB NOT FREE CODER_")
+    m = await message.reply_text(f"🎵 **MGB AI aapke '{mood}' mood ke liye best gaane dhoondh raha hai...** 🍷")
+    
+    system = "You are an expert Music DJ. Suggest exactly 5 best Bollywood/Punjabi songs for the given mood. Format as a numbered list with Song Name and Artist. Don't add extra text."
+    songs = await fetch_gemini_text(f"Mood: {mood}", system)
+    
+    dj_text = f"🎧 **MGB AI SMART DJ** 🎧\n\n✦ **Aapka Mood:** {mood}\n\n{songs}\n\n💌 _Gaana sunne ke liye type karein /play <song name>_"
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    await m.edit_text(dj_text, reply_markup=keyboard)
 
 # ==========================================
-# 5. 🔥 ROAST (/roast)
+# 5. 😈 AI Roast Master (MGB Special)
 # ==========================================
-@bot.on_message(filters.command(["roast"], prefixes=["/", "!", "."]))
+@bot.on_message(filters.command(["roast", "beizzati"], prefixes=["/", "!", "."]))
 async def ai_roast(client, message: Message):
     if not message.reply_to_message:
-        return await message.reply_text("✨ **Usage:** Reply to any user's message with `/roast`")
-    target_text = message.reply_to_message.text or "this user"
-    m = await message.reply_text("🔥 **Roast mode ON...** 💀")
-    reply = get_gemini_response(f"Roast this text hilariously in Hinglish, be funny but not extremely abusive: '{target_text}'")
-    await m.edit_text(f"🔥 **ROASTED:**\n\n{reply}\n\n✨ _Powered by MGB NOT FREE CODER_")
+        return await message.reply_text("✦ **Boss, kisi ke message ka reply karke /roast likho!** Tabhi toh asli maza aayega! ☠️")
+    
+    target_text = message.reply_to_message.text or "kuch ajeeb sa bheja hai"
+    target_name = message.reply_to_message.from_user.first_name if message.reply_to_message.from_user else "is bande"
+    
+    m = await message.reply_text("☠️ **MGB AI Roast load kar raha hai... 🔥**")
+    
+    system = "You are a savage, funny, and brutal roast master created by MGB NOT FREE CODER. Roast the person in a very funny Hinglish style. Keep it short, savage, and entertaining. Don't use extreme swear words."
+    roast_text = await fetch_gemini_text(f"Roast this person named {target_name} who said: '{target_text}'", system)
+    
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    await m.edit_text(f"☠️ **ROASTED BY MGB AI** ☠️\n\n👤 **Target:** {target_name}\n🔥 **Roast:** {roast_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
 
 # ==========================================
-# 6. 💌 FLIRT & SHAYARI (/flirt or /shayari)
+# 6. 💔 AI Shayari & Flirt Master 
 # ==========================================
-@bot.on_message(filters.command(["flirt", "shayari"], prefixes=["/", "!", "."]))
-async def ai_flirt(client, message: Message):
-    m = await message.reply_text("💌 **Romantic line likh raha hu...** ✨")
-    reply = get_gemini_response("Write a cute, romantic, and impressive 2-line Shayari or flirt line in Hinglish with aesthetic emojis.")
-    await m.edit_text(f"💌 **SHAYARI:**\n\n{reply}\n\n✨ _Powered by MGB NOT FREE CODER_")
+@bot.on_message(filters.command(["shayari", "flirt"], prefixes=["/", "!", "."]))
+async def ai_shayari(client, message: Message):
+    prompt = ""
+    target_name = ""
+
+    if message.reply_to_message:
+        target_name = message.reply_to_message.from_user.first_name if message.reply_to_message.from_user else "is cute bande/bandi"
+        prompt = f"Write a very impressive, romantic and smooth flirt line in Hinglish for {target_name}."
+    elif len(message.command) > 1:
+        topic = message.text.split(None, 1)[1]
+        prompt = f"Write a 4-line killer Hindi/Hinglish shayari about: {topic}."
+    else:
+        prompt = "Write a random 4-line attitude or love shayari in Hinglish."
+    
+    system = "You are a romantic, stylish, and smooth Shayar and Flirt master created by MGB NOT FREE CODER. Write short, impressive Hinglish poetry or flirt lines. Use emojis. Make it cool and savage."
+    m = await message.reply_text("🍷 **MGB AI aapke liye kuch special likh raha hai... ✨**")
+    
+    result_text = await fetch_gemini_text(prompt, system)
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    header = f"🍷 **FLIRT MACHINE** 🍷\n👤 **Target:** {target_name}\n\n" if target_name else "🍷 **MGB AI SHAYARI** 🍷\n\n"
+    
+    await m.edit_text(f"{header}{result_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
 
 # ==========================================
-# 7. 🔮 FUNNY BABA (/baba)
+# 7. 🔮 AI Baba / Astrologer 
 # ==========================================
 @bot.on_message(filters.command(["baba", "future"], prefixes=["/", "!", "."]))
 async def ai_baba(client, message: Message):
     if len(message.command) < 2:
-        return await message.reply_text("✨ **Usage:** `/baba <question>`")
+        return await message.reply_text("✦ Bacha, pehle apna sawal toh pucho!\nExample: `/baba meri shadi kab hogi?`")
+    
     query = message.text.split(None, 1)[1]
-    m = await message.reply_text("🔮 **Baba dhyaan laga rahe hain...** 🧘‍♂️")
-    reply = get_gemini_response(f"Act as a funny Indian Baba predicting the future. Answer this question hilariously in Hinglish: '{query}'")
-    await m.edit_text(f"🔮 **BABA JI SAYS:**\n\n{reply}\n\n✨ _Powered by MGB NOT FREE CODER_")
+    m = await message.reply_text("📿 **MGB Baba dhyaan laga rahe hain... 🧘‍♂️**")
+    
+    system = "You are a funny, savage, and dramatic Indian Baba/Astrologer created by MGB NOT FREE CODER. Answer the user's question about their future in Hinglish. Make it very funny, roasting, and humorous. Use words like 'Vats', 'Bacha', 'Tathastu'."
+    answer = await fetch_gemini_text(query, system)
+    
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    await m.edit_text(f"𓆩♛𓆪 **MGB BABA BHAWISHYAWANI** 𓆩♛𓆪\n\n🗣️ **Bhakht ka Sawal:** {query}\n\n🧘‍♂️ **Baba ka Jawab:** {answer}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
 
 # ==========================================
-# 8. 🃏 TRUTH OR DARE (/tod)
+# 8. 🎭 AI Meme Generator 
 # ==========================================
-@bot.on_message(filters.command(["tod"], prefixes=["/", "!", "."]))
+@bot.on_message(filters.command(["meme", "joke"], prefixes=["/", "!", "."]))
+async def ai_meme(client, message: Message):
+    topic = message.text.split(None, 1)[1] if len(message.command) > 1 else "random dank programming or life"
+    prompt = f"Make a very funny meme text or joke about: {topic}"
+    
+    m = await message.reply_text("🎭 **MGB AI dank meme dhoondh raha hai... 😂**")
+    
+    system = "You are a dank meme generator created by MGB NOT FREE CODER. Write a very funny, short, and savage meme text or joke in Hinglish. Use relevant emojis."
+    meme_text = await fetch_gemini_text(prompt, system)
+    
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    await m.edit_text(f"🎭 **MGB MEME ZONE** 🎭\n\n{meme_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
+
+# ==========================================
+# 9. 🎲 AI Truth or Dare (TOD)
+# ==========================================
+@bot.on_message(filters.command(["tod", "truthordare"], prefixes=["/", "!", "."]))
 async def ai_tod(client, message: Message):
     if len(message.command) < 2 or message.command[1].lower() not in ["truth", "dare"]:
-        return await message.reply_text("✨ **Usage:** `/tod truth` OR `/tod dare`")
+        return await message.reply_text("✦ Boss, sahi se batao!\nExample: `/tod truth` ya `/tod dare`")
+    
     choice = message.command[1].lower()
-    m = await message.reply_text(f"🃏 **Generating a spicy {choice}...** ✨")
-    reply = get_gemini_response(f"Give a fun, slightly tricky but safe '{choice}' question/task for a party game in Hinglish.")
-    await m.edit_text(f"🃏 **YOUR {choice.upper()}:**\n\n{reply}\n\n✨ _Powered by MGB NOT FREE CODER_")
+    prompt = f"Give me a {choice} question/task"
+    
+    m = await message.reply_text(f"🃏 **MGB AI aapke liye ek khatarnak {choice} nikal raha hai... 😈**")
+    
+    system = f"You are a fun Truth or Dare game master created by MGB NOT FREE CODER. The user chose {choice}. Give a funny, creative, and slightly embarrassing but safe {choice} in Hinglish. Keep it short. Use emojis."
+    tod_text = await fetch_gemini_text(prompt, system)
+    
+    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+    await m.edit_text(f"🃏 **MGB TRUTH OR DARE** 🃏\n\n🎯 **Choice:** {choice.upper()}\n😈 **Task:** {tod_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
 
 # ==========================================
-# 9. 🫧 PREMIUM MENU (/aimenu)
+# 10. 𓆩♛𓆪 AI Interactive Menu (Aesthetic Style)
 # ==========================================
 @bot.on_message(filters.command(["aimenu", "aihelp"], prefixes=["/", "!", "."]))
 async def ai_menu(client, message: Message):
     menu_text = (
-        "🫧 **MGB NOT FREE CODER - AI COMMANDS MENU** 🫧\n\n"
-        "✨ **Available AI Features:**\n"
-        " ├ `/ask <question>` - Gemini AI Chat\n"
-        " ├ `/draw <prompt>` - HD AI Image Generator\n"
-        " ├ `/speak <text>` - AI Voice Note (TTS)\n"
-        " ├ `/aidj <mood>` - Smart AI Music DJ\n"
-        " ├ `/roast` - Reply to message & roast\n"
-        " ├ `/flirt` or `/shayari` - Romantic Shayaris\n"
-        " ├ `/baba <question>` - Funny Future Predictor\n"
-        " └ `/tod truth/dare` - Truth or Dare Game\n\n"
-        "💌 _Note: You can also talk to me by replying to my messages!_"
+        "𓆩♛𓆪 **MGB NOT FREE CODER - AI MENU** 𓆩♛𓆪\n\n"
+        "✦ **Available AI Features:**\n"
+        " ├ `/ask` - Gemini AI Chat\n"
+        " ├ `/draw` - Gemini Imagen 3\n"
+        " ├ `/speak` - AI Voice Note\n"
+        " ├ `/aidj` - Smart AI Music DJ\n"
+        " ├ `/roast` - Savage Roast\n"
+        " ├ `/flirt` / `/shayari` - Love Shayari\n"
+        " ├ `/baba` - Future Predictor\n"
+        " ├ `/meme` - Dank AI Memes\n"
+        " └ `/tod` - Truth or Dare\n\n"
+        "×̷̷͜×̷ *Select any option below!*"
     )
     
     keyboard = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("🫧 ᴀɪ ᴄʜᴀᴛ 🫧", callback_data="ai_chat_info"),
-            InlineKeyboardButton("✨ ᴀɪ ɪᴍᴀɢᴇs ✨", callback_data="ai_draw_info")
+            InlineKeyboardButton("✦ ᴀɪ ᴄʜᴀᴛ", callback_data="ai_chat_info"),
+            InlineKeyboardButton("🕸️ ᴀɪ ɪᴍᴀɢᴇs", callback_data="ai_draw_info")
         ],
         [
-            InlineKeyboardButton("🔮 sᴍᴀʀᴛ ᴅᴊ 🔮", callback_data="ai_dj_info"),
-            InlineKeyboardButton("🎭 ʀᴏᴀsᴛ & ғᴜɴ 🎭", callback_data="ai_roast_info")
+            InlineKeyboardButton("🍷 sᴍᴀʀᴛ ᴅᴊ", callback_data="ai_dj_info"),
+            InlineKeyboardButton("☠️ ʀᴏᴀsᴛ & ғᴜɴ", callback_data="ai_roast_info")
         ],
-        [InlineKeyboardButton("💌 ᴏᴡɴᴇʀ ᴄᴏɴᴛᴀᴄᴛ 💌", url="https://t.me/MGB_CODER")]
+        [InlineKeyboardButton("🦅 𝐎𝐖𝐍𝐄𝐑 𝐂𝐎𝐍𝐓𝐀𝐂𝐓 🦅", url="https://t.me/MGB_CODER")]
     ])
     
-    banner_url = "https://image.pollinations.ai/prompt/cyberpunk%20neon%20bot%20banner?width=1280&height=720&nologo=true"
-    
-    await message.reply_photo(
-        photo=banner_url,
-        caption=menu_text,
-        reply_markup=keyboard
-    )
+    await message.reply_text(menu_text, reply_markup=keyboard)
     
