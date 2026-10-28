@@ -41,4 +41,3 @@ lottie>=0.7.2
 
 # ── AI Features ──────────────────────────
 gTTS
-google-generativeai
