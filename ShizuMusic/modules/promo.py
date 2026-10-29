@@ -28,9 +28,16 @@ async def fetch_promo_text():
         return None
     return None
 
-# 🎨 2. PREMIUM HD IMAGE API (Lexica)
-async def fetch_lexica_image(prompt):
-    encoded_prompt = urllib.parse.quote(prompt)
+# 🎨 2. PREMIUM HD IMAGE API (Lexica - 100% Random Every Time)
+async def fetch_lexica_image():
+    # एक रैंडम प्रॉम्प्ट उठाएगा
+    base_prompt = random.choice(PROMPTS)
+    
+    # 🎯 हर बार नए रिज़ल्ट के लिए एक रैंडम एस्थेटिक कीवर्ड जोड़ेंगे
+    random_styles = ["cinematic lighting", "trending on artstation", "ultra detailed", "8k resolution", "unreal engine 5", "masterpiece"]
+    final_prompt = f"{base_prompt}, {random.choice(random_styles)}"
+    
+    encoded_prompt = urllib.parse.quote(final_prompt)
     url = f"https://lexica.art/api/v1/search?q={encoded_prompt}"
     try:
         async with aiohttp.ClientSession() as session:
@@ -38,7 +45,8 @@ async def fetch_lexica_image(prompt):
                 if resp.status == 200:
                     data = await resp.json()
                     if data and "images" in data and len(data["images"]) > 0:
-                        return random.choice(data["images"][:3])["src"]
+                        # 🎯 अब यह टॉप 3 के बजाय पूरी 50 इमेजेस की लिस्ट में से एक रैंडम फोटो निकालेगा!
+                        return random.choice(data["images"])["src"]
     except Exception:
         return None
     return None
@@ -77,7 +85,7 @@ async def promo_message(client, message: Message):
     if ai_text:
         promo_text = f"{ai_text}\n\n💌 Powered by @MGB_NOT_FREE"
         
-    img_url = await fetch_lexica_image(random.choice(PROMPTS))
+    img_url = await fetch_lexica_image()
 
     # Send Final Message
     try:
