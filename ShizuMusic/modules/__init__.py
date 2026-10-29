@@ -37,4 +37,5 @@ ALL_MODULES = [
     "promo",
     "welcome",
     "ai",
+    "downloader",
 ]
