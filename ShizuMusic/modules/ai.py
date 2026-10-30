@@ -1,313 +1,400 @@
-import os
-import shutil
+# ═══════════════════════════════════════════════════════════════
+#                     🎵 MGB NOT FREE CODER
+#          ULTIMATE AI MODULE (4K IMAGE + ZERO GARBAGE)
+# ═══════════════════════════════════════════════════════════════
+
+import io
 import random
 import urllib.parse
 import aiohttp
-from gtts import gTTS
 from pyrogram import filters
-from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
-
+from pyrogram.types import (
+    Message,
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
 from ShizuMusic import bot
 
+OWNER_URL = "https://t.me/MGB_CODER"
+
+def get_owner_kb():
+    return InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url=OWNER_URL)]])
+
+def get_aimenu_kb():
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("✦ AI CHAT", callback_data="ai_cb_chat"),
+            InlineKeyboardButton("🎨 AI IMAGES", callback_data="ai_cb_draw"),
+        ],
+        [
+            InlineKeyboardButton("🍷 SMART DJ", callback_data="ai_cb_dj"),
+            InlineKeyboardButton("💀 ROAST & FUN", callback_data="ai_cb_fun"),
+        ],
+        [
+            InlineKeyboardButton("🦅 OWNER CONTACT 🦅", url=OWNER_URL)
+        ]
+    ])
+
 # ==========================================
-# 🧠 1. ADVANCED ACCURATE TEXT AI
+# 🎨 1. 100% GUARANTEED 4K IMAGE ENGINE
+# ==========================================
+async def get_ai_image_bytes(prompt="beautiful anime girl 4k aesthetic"):
+    clean_prompt = f"{prompt}, ultra detailed, 4k resolution, masterpiece, vibrant aesthetic"
+    encoded_prompt = urllib.parse.quote(clean_prompt)
+    seed = random.randint(100000, 999999)
+    
+    urls = [
+        f"https://image.pollinations.ai/prompt/{encoded_prompt}?seed={seed}&width=1024&height=1024&nologo=true&model=flux",
+        f"https://image.pollinations.ai/prompt/{encoded_prompt}?seed={seed}&width=1024&height=1024&nologo=true",
+    ]
+    
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    timeout = aiohttp.ClientTimeout(total=20)
+    
+    async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
+        # Layer 1 & 2: Pollinations 4K AI
+        for url in urls:
+            try:
+                async with session.get(url) as resp:
+                    if resp.status == 200:
+                        data = await resp.read()
+                        if len(data) > 1500:
+                            bio = io.BytesIO(data)
+                            bio.name = "mgb_4k.jpg"  # Mandatory for Pyrogram!
+                            return bio
+            except Exception:
+                continue
+        
+        # Layer 3: Instant HD Anime Girl Fallback (Never Fails!)
+        try:
+            async with session.get("https://api.waifu.pics/sfw/waifu") as r:
+                if r.status == 200:
+                    js = await r.json()
+                    img_url = js.get("url")
+                    if img_url:
+                        async with session.get(img_url) as img_r:
+                            if img_r.status == 200:
+                                bio = io.BytesIO(await img_r.read())
+                                bio.name = "mgb_anime.jpg"
+                                return bio
+        except Exception:
+            pass
+    return None
+
+# Helper to safely send Photo + Caption under 1024 limit
+async def send_4k_card(message: Message, status_msg: Message, prompt_img: str, caption: str, reply_markup=None):
+    if reply_markup is None:
+        reply_markup = get_owner_kb()
+    
+    # Telegram photo caption limit is 1024 chars
+    if len(caption) > 1000:
+        caption = caption[:995] + "..."
+        
+    img_bio = await get_ai_image_bytes(prompt_img)
+    if img_bio:
+        try:
+            await message.reply_photo(photo=img_bio, caption=caption, reply_markup=reply_markup)
+            if status_msg:
+                await status_msg.delete()
+            return
+        except Exception:
+            pass
+            
+    if status_msg:
+        await status_msg.edit_text(caption, reply_markup=reply_markup)
+    else:
+        await message.reply_text(caption, reply_markup=reply_markup)
+
+# ==========================================
+# 🧠 2. CLEAN & ACCURATE TEXT AI (POST JSON)
 # ==========================================
 async def fetch_advanced_ai_text(prompt, system_prompt=""):
-    enhanced_system = (
-        "You are an elite, highly intelligent, and strictly factual AI assistant created by MGB NOT FREE CODER. "
-        "Provide accurate, deep, well-researched, and structured answers in stylish Hinglish. "
-        "Never give false or vague information. Be precise and professional."
+    default_system = (
+        "You are an elite, 100% accurate AI created by MGB NOT FREE CODER. "
+        "Always give verified facts (especially movie release dates, history, coding). "
+        "Keep answers concise (under 500 characters), clean, and in natural Hinglish. "
+        "NEVER output weird markdown tables, random symbols, or meta instructions."
     )
-    if system_prompt:
-        enhanced_system += f" {system_prompt}"
-        
-    encoded_prompt = urllib.parse.quote(prompt)
-    encoded_system = urllib.parse.quote(enhanced_system)
-    url = f"https://text.pollinations.ai/{encoded_prompt}?system={encoded_system}"
+    final_system = system_prompt if system_prompt else default_system
     
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
+    payload = {
+        "messages": [
+            {"role": "system", "content": final_system},
+            {"role": "user", "content": prompt}
+        ],
+        "model": "openai",
+        "private": True
+    }
+    
+    headers = {"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
+    timeout = aiohttp.ClientTimeout(total=20)
+    
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        # Try 1: Official POST Endpoint (No Garbage, 100% Clean)
+        try:
+            async with session.post("https://text.pollinations.ai/", json=payload, headers=headers) as resp:
                 if resp.status == 200:
-                    return await resp.text()
-                return "❌ **AI Server busy hai, kripya thodi der baad try karein!**"
-    except Exception as e:
-        return f"❌ **Error:** `{e}`"
+                    text = (await resp.text()).strip()
+                    if text:
+                        return text[:650]
+        except Exception:
+            pass
+            
+        # Try 2: Fast GET Fallback
+        try:
+            enc_p = urllib.parse.quote(prompt)
+            enc_s = urllib.parse.quote(final_system)
+            url = f"https://text.pollinations.ai/{enc_p}?model=openai&system={enc_s}"
+            async with session.get(url) as resp2:
+                if resp2.status == 200:
+                    text = (await resp2.text()).strip()
+                    if text:
+                        return text[:650]
+        except Exception:
+            pass
+            
+    return "⚡ Boss, abhi server par high traffic hai, 5 second baad try karein!"
 
 # ==========================================
-# 🎨 2. ADVANCED LEXICA & POLLINATIONS 4K IMAGE API
+# 👑 3. /aimenu - FULL MENU WITH 4K IMAGE
 # ==========================================
-async def generate_advanced_ai_image(prompt):
-    encoded_prompt = urllib.parse.quote(f"{prompt} highly detailed 4k resolution masterpiece aesthetic")
-    lexica_url = f"https://lexica.art/api/v1/search?q={encoded_prompt}"
+AIMENU_TEXT = (
+    "👑 **MGB NOT FREE CODER - AI MENU** 👑\n\n"
+    "✦ **Available AI Features:**\n"
+    "┏━━━━━━━━━━━━━━━━━━━⧫\n"
+    "┠ `/ask` - Smart AI Chat\n"
+    "┠ `/draw` - Premium 4K HD Images\n"
+    "┠ `/speak` - AI Voice Note\n"
+    "┠ `/aidj` - Smart AI Music DJ\n"
+    "┠ `/roast` - Savage Roast\n"
+    "┠ `/flirt` / `/shayari` - Love Shayari\n"
+    "┠ `/baba` - Future Predictor\n"
+    "┠ `/meme` - Dank AI Memes\n"
+    "┗ `/tod` - Truth or Dare\n\n"
+    "✦ *Select any option below!*\n"
+    "💌 Powered by @MGB_NOT_FREE"
+)
+
+@bot.on_message(filters.command(["aimenu", "aihelp"], prefixes=["/", "!", "."]))
+async def ai_menu_cmd(client, message: Message):
+    m = await message.reply_text("✨ **Loading MGB 4K AI Menu...**")
+    await send_4k_card(
+        message=message,
+        status_msg=m,
+        prompt_img="cyberpunk aesthetic anime girl headphones neon glowing 4k",
+        caption=AIMENU_TEXT,
+        reply_markup=get_aimenu_kb()
+    )
+
+@bot.on_callback_query(filters.regex("^ai_cb_"))
+async def ai_menu_callbacks(client, query: CallbackQuery):
+    data = query.data
+    if data == "ai_cb_chat":
+        txt = "🤖 **MGB SMART AI CHAT**\n\nKoi bhi sawal puchne ke liye likhein:\n`/ask Awarapan movie kab release hui thi?`"
+    elif data == "ai_cb_draw":
+        txt = "🎨 **MGB 4K IMAGE GENERATOR**\n\nKoi bhi 4K photo banwane ke liye likhein:\n`/draw cute anime girl with katana 4k`"
+    elif data == "ai_cb_dj":
+        txt = "🍷 **MGB SMART AI DJ**\n\nApne mood ke hisaab se best songs pane ke liye likhein:\n`/aidj late night drive romantic songs`"
+    else:
+        txt = "💀 **MGB ROAST & FUN ZONE**\n\n• `/roast @username`\n• `/flirt romantic`\n• `/baba meri shadi kab hogi`\n• `/meme coding`\n• `/tod`"
     
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(lexica_url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    if data and "images" in data and len(data["images"]) > 0:
-                        return random.choice(data["images"][:5])["src"]
-    except Exception:
-        pass
-    
-    refined_prompt = f"masterpiece, ultra detailed 4k, professional digital art, {prompt}, flawless lighting, high definition"
-    encoded_pollination = urllib.parse.quote(refined_prompt)
-    seed = random.randint(1000, 999999)
-    return f"https://image.pollinations.ai/prompt/{encoded_pollination}?width=1280&height=1280&seed={seed}&nologo=true&enhance=true"
+    back_kb = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 𝐁𝐀𝐂𝐊 𝐓𝐎 𝐌𝐄𝐍𝐔", callback_data="ai_back_main")]])
+    await query.message.edit_caption(caption=f"{txt}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=back_kb)
+
+@bot.on_callback_query(filters.regex("^ai_back_main$"))
+async def ai_menu_back(client, query: CallbackQuery):
+    await query.message.edit_caption(caption=AIMENU_TEXT, reply_markup=get_aimenu_kb())
 
 # ==========================================
-# 1. 🤖 Advanced AI Chatbot (/ask)
+# 🤖 4. /ask - ACCURATE AI CHAT
 # ==========================================
 @bot.on_message(filters.command(["ask", "ai", "chat"], prefixes=["/", "!", "."]))
 async def ai_chat(client, message: Message):
     if len(message.command) < 2:
-        top_img = await generate_advanced_ai_image("advanced futuristic intelligent cyberpunk AI 4k wallpaper")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ **Boss, koi advanced sawal pucho!**\nExample: `/ask Black hole kya hota hai?`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
+        m = await message.reply_text("✨ **Loading...**")
+        return await send_4k_card(
+            message, m,
+            "cute anime girl with futuristic hologram 4k",
+            "✦ **Boss, koi sawal pucho!**\nExample: `/ask Awarapan movie kab release hui thi?`"
+        )
     
     query = message.text.split(None, 1)[1]
-    m = await message.reply_text("🧠 **MGB Advanced AI research kar raha hai...** ✦")
-    
+    m = await message.reply_text("🧠 **MGB AI accurate answer nikal raha hai...** ✦")
     answer = await fetch_advanced_ai_text(query)
-    top_img = await generate_advanced_ai_image(f"conceptual digital art representing {query}")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    await message.reply_photo(photo=top_img, caption=f"𓆩🤖𓆪 **MGB ADVANCED AI ZONE:**\n\n💬 **Sawal:** `{query}`\n\n{answer}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    await m.delete()
+    caption = f"𓆩🤖𓆪 **MGB ADVANCED AI:**\n\n💬 **Sawal:** `{query}`\n\n{answer}\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, f"aesthetic anime art {query}", caption)
 
 # ==========================================
-# 2. 🎨 AI Image Creator (/draw)
+# 🎨 5. /draw - 4K IMAGE GENERATOR
 # ==========================================
 @bot.on_message(filters.command(["draw", "imagine"], prefixes=["/", "!", "."]))
 async def ai_draw(client, message: Message):
     if len(message.command) < 2:
-        top_img = await generate_advanced_ai_image("stunning cyberpunk city neon aesthetic anime 4k")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ **Boss, kya banwana hai?**\nExample: `/draw a beautiful anime girl in a neon cyber city`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
+        m = await message.reply_text("✨ **Loading...**")
+        return await send_4k_card(
+            message, m,
+            "cyberpunk anime girl 4k",
+            "✦ **Boss, kya banwana hai?**\nExample: `/draw a cute dog in 4k`"
+        )
     
     prompt = message.text.split(None, 1)[1]
-    m = await message.reply_text("🎨 **MGB Advanced AI 4K Masterpiece render kar raha hai... Please wait!** 🕸️")
-    
-    img_url = await generate_advanced_ai_image(prompt)
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    try:
-        await message.reply_photo(photo=img_url, caption=f"🎨 **Generated Prompt:** `{prompt}`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-        await m.delete()
-    except Exception as e:
-        await message.reply_text(f"❌ Photo bhejne mein error aayi: {e}")
-        await m.delete()
+    m = await message.reply_text("🎨 **MGB AI 4K Image generate kar raha hai...** 🕸️")
+    caption = f"🎨 **MGB 4K AI ART**\n\n✨ **Prompt:** `{prompt}`\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, prompt, caption)
 
 # ==========================================
-# 3. 🔊 AI Voice Note (Text-to-Speech + Storage Trick)
-# ==========================================
-@bot.on_message(filters.command(["speak", "tts"], prefixes=["/", "!", "."]))
-async def ai_speak(client, message: Message):
-    if len(message.command) < 2:
-        top_img = await generate_advanced_ai_image("music sound waves aesthetic neon anime")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ **Boss, kya bolwana hai?**\nExample: `/speak MGB Coder is genius!`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    
-    text = message.text.split(None, 1)[1]
-    m = await message.reply_text("🗣️ **MGB AI voice generate kar raha hai...** ✦")
-    file_name = f"voice_{message.from_user.id}.mp3"
-    
-    try:
-        tts = gTTS(text=text, lang='hi')
-        tts.save(file_name)
-        
-        top_img = await generate_advanced_ai_image("singing anime girl cute headphones 4k")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        
-        await message.reply_photo(photo=top_img, caption=f"🗣️ **AI Voice Note:** `{text}`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-        await message.reply_voice(voice=file_name)
-        await m.delete()
-    except Exception as e:
-        await message.reply_text(f"❌ Voice banane mein error aayi: {e}")
-        await m.delete()
-    finally:
-        # 🌟 STORAGE FULL TRICK 🌟
-        if os.path.exists(file_name):
-            try:
-                os.remove(file_name)
-            except:
-                pass
-
-# ==========================================
-# 4. 🎵 AI Smart DJ
-# ==========================================
-@bot.on_message(filters.command(["aidj", "mood"], prefixes=["/", "!", "."]))
-async def ai_dj(client, message: Message):
-    if len(message.command) < 2:
-        top_img = await generate_advanced_ai_image("dj party neon music concert anime 4k")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ **Boss, mood kaisa hai?**\nExample: `/aidj romantic` or `/aidj sad`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    
-    mood = message.text.split(None, 1)[1]
-    m = await message.reply_text(f"🎵 **MGB AI aapke '{mood}' mood ke liye best gaane analyze kar raha hai...** 🍷")
-    
-    system = "Suggest exactly 5 accurate and popular Bollywood/Punjabi songs for the given mood as a clean numbered list."
-    songs = await fetch_advanced_ai_text(f"Mood: {mood}", system)
-    
-    dj_text = f"🎧 **MGB ADVANCED AI DJ** 🎧\n\n✦ **Aapka Mood:** {mood}\n\n{songs}\n\n💌 _Gaana sunne ke liye type karein /play <song name>_\n\n💌 Powered by @MGB_NOT_FREE"
-    top_img = await generate_advanced_ai_image(f"{mood} music mood aesthetic anime girl")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    await message.reply_photo(photo=top_img, caption=dj_text, reply_markup=keyboard)
-    await m.delete()
-
-# ==========================================
-# 5. 😈 AI Roast Master
-# ==========================================
-@bot.on_message(filters.command(["roast", "beizzati"], prefixes=["/", "!", "."]))
-async def ai_roast(client, message: Message):
-    if not message.reply_to_message:
-        top_img = await generate_advanced_ai_image("savage angry anime character fire background")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ **Boss, kisi ke message ka reply karke /roast likho!** Tabhi toh asli maza aayega! ☠️\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    
-    target_text = message.reply_to_message.text or "kuch ajeeb sa bheja hai"
-    target_name = message.reply_to_message.from_user.first_name if message.reply_to_message.from_user else "is bande"
-    m = await message.reply_text("☠️ **MGB Advanced Roast load ho raha hai... 🔥**")
-    
-    system = "Roast the person in a very funny, clever, and savage Hinglish style without being overly toxic."
-    roast_text = await fetch_advanced_ai_text(f"Roast this person named {target_name} who said: '{target_text}'", system)
-    
-    top_img = await generate_advanced_ai_image("funny savage angry anime meme face")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    await message.reply_photo(photo=top_img, caption=f"☠️ **ADVANCED ROASTED BY MGB AI** ☠️\n\n👤 **Target:** {target_name}\n🔥 **Roast:** {roast_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    await m.delete()
-
-# ==========================================
-# 6. 💔 AI Shayari & Flirt Master 
-# ==========================================
-@bot.on_message(filters.command(["shayari", "flirt"], prefixes=["/", "!", "."]))
-async def ai_shayari(client, message: Message):
-    prompt, target_name = "", ""
-    if message.reply_to_message:
-        target_name = message.reply_to_message.from_user.first_name if message.reply_to_message.from_user else "is cute bande/bandi"
-        prompt = f"Write a very impressive, intelligent, and smooth flirt line in Hinglish for {target_name}."
-    elif len(message.command) > 1:
-        topic = message.text.split(None, 1)[1]
-        prompt = f"Write a deep and poetic 4-line Hindi/Hinglish shayari about: {topic}."
-    else:
-        prompt = "Write a soulful 4-line love shayari in Hinglish."
-    
-    system = "Write creative, heart-touching, and stylish Hinglish poetry with nice emojis."
-    m = await message.reply_text("🍷 **MGB Advanced AI shayari craft kar raha hai... ✨**")
-    
-    result_text = await fetch_advanced_ai_text(prompt, system)
-    top_img = await generate_advanced_ai_image("romantic sunset aesthetic anime couple 4k")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    header = f"🍷 **ADVANCED FLIRT MACHINE** 🍷\n👤 **Target:** {target_name}\n\n" if target_name else "🍷 **MGB AI SHAYARI** 🍷\n\n"
-    
-    await message.reply_photo(photo=top_img, caption=f"{header}{result_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    await m.delete()
-
-# ==========================================
-# 7. 🔮 AI Baba / Astrologer 
+# 🔮 6. /baba - CLEAN FUTURE PREDICTOR
 # ==========================================
 @bot.on_message(filters.command(["baba", "future"], prefixes=["/", "!", "."]))
 async def ai_baba(client, message: Message):
     if len(message.command) < 2:
-        top_img = await generate_advanced_ai_image("mystic magic wizard glowing crystal ball 4k")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ Bacha, pehle apna sawal toh pucho!\nExample: `/baba meri shadi kab hogi?`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
+        m = await message.reply_text("✨ **Loading...**")
+        return await send_4k_card(
+            message, m,
+            "mystical anime girl mage glowing crystal ball 4k",
+            "✦ **Bacha, pehle apna sawal toh pucho!**\nExample: `/baba meri shadi kab hogi?`"
+        )
     
     query = message.text.split(None, 1)[1]
     m = await message.reply_text("📿 **MGB Baba divya drishti laga rahe hain... 🧘‍♂️**")
     
-    system = "Answer as a witty, dramatic, and humorous Indian Baba in Hinglish using words like 'Vats', 'Bacha', 'Tathastu'."
-    answer = await fetch_advanced_ai_text(query, system)
-    
-    top_img = await generate_advanced_ai_image("fortune teller mystic prophecy glowing magic")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    await message.reply_photo(photo=top_img, caption=f"𓆩♛𓆪 **MGB ADVANCED BABA BHAWISHYAWANI** 𓆩♛𓆪\n\n🗣️ **Bhakht ka Sawal:** {query}\n\n🧘‍♂️ **Baba ka Jawab:** {answer}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    await m.delete()
+    sys_p = (
+        "You are MGB Baba, a hilarious Indian astrologer. Reply in 3-4 short, clean sentences in Hinglish. "
+        "Start with 'Bachha sun!' and end with 'Tathastu! ✋'. "
+        "DO NOT use any tables, bullet points, or random English gibberish."
+    )
+    answer = await fetch_advanced_ai_text(query, sys_p)
+    caption = (
+        f"𓆩♛𓆪 **MGB BABA BHAWISHYAWANI** 𓆩♛𓆪\n\n"
+        f"🗣️ **Bhakht ka Sawal:** `{query}`\n\n"
+        f"🧘‍♂️ **Baba ka Jawab:**\n{answer}\n\n"
+        f"💌 Powered by @MGB_NOT_FREE"
+    )
+    await send_4k_card(message, m, "mystic fortune teller magic aura anime 4k", caption)
 
 # ==========================================
-# 8. 🎭 AI Meme Generator (Funny Image + Text)
+# 🎭 7. /meme - REAL IMAGE + FUNNY PUNCHLINE
 # ==========================================
 @bot.on_message(filters.command(["meme", "joke"], prefixes=["/", "!", "."]))
 async def ai_meme(client, message: Message):
-    topic = message.text.split(None, 1)[1] if len(message.command) > 1 else "coding and developer life"
-    m = await message.reply_text("🎭 **MGB Advanced AI dank meme generate kar raha hai... 😂**")
+    topic = message.text.split(None, 1)[1] if len(message.command) > 1 else "Indian students and mobile coding"
+    m = await message.reply_text("🎭 **MGB AI ek tagda meme bana raha hai... 😂**")
     
-    system = "Write a clever, highly relatable, and funny tech/life meme text in Hinglish with emojis."
-    meme_text = await fetch_advanced_ai_text(f"Make a funny meme text about: {topic}", system)
-    
-    top_img = await generate_advanced_ai_image(f"funny hilarious dank meme cartoon reaction about {topic}")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    await message.reply_photo(photo=top_img, caption=f"🎭 **MGB ADVANCED MEME ZONE** 🎭\n\n{meme_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    await m.delete()
-
-# ==========================================
-# 9. 🎲 AI Truth or Dare (TOD)
-# ==========================================
-@bot.on_message(filters.command(["tod", "truthordare"], prefixes=["/", "!", "."]))
-async def ai_tod(client, message: Message):
-    if len(message.command) < 2 or message.command[1].lower() not in ["truth", "dare"]:
-        top_img = await generate_advanced_ai_image("gaming neon aesthetic challenge mystery")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="✦ Boss, sahi se batao!\nExample: `/tod truth` ya `/tod dare`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    
-    choice = message.command[1].lower()
-    m = await message.reply_text(f"🃏 **MGB AI ek mazedaar {choice} task nikal raha hai... 😈**")
-    
-    system = f"Give a creative, entertaining, and safe {choice} challenge in Hinglish."
-    tod_text = await fetch_advanced_ai_text(f"Give a creative {choice} challenge.", system)
-    
-    top_img = await generate_advanced_ai_image(f"mystery game challenge {choice} anime aesthetic")
-    keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-    
-    await message.reply_photo(photo=top_img, caption=f"🃏 **MGB ADVANCED TRUTH OR DARE** 🃏\n\n🎯 **Choice:** {choice.upper()}\n😈 **Task:** {tod_text}\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-    await m.delete()
-
-# ==========================================
-# 10. 𓆩♛𓆪 AI Interactive Menu
-# ==========================================
-@bot.on_message(filters.command(["aimenu", "aihelp"], prefixes=["/", "!", "."]))
-async def ai_menu(client, message: Message):
-    menu_text = (
-        "𓆩♛𓆪 **MGB ADVANCED AI - CONTROL PANEL** 𓆩♛𓆪\n\n"
-        "✦ **Available Advanced Features:**\n"
-        " ├ `/ask` - Smart Accurate AI Chat\n"
-        " ├ `/draw` - Real-time 4K Image Generator\n"
-        " ├ `/speak` - AI Voice Studio\n"
-        " ├ `/aidj` - Smart AI Music DJ\n"
-        " ├ `/roast` - Savage Roast Master\n"
-        " ├ `/flirt` / `/shayari` - Soulful Shayari\n"
-        " ├ `/baba` - Future Predictor\n"
-        " ├ `/meme` - Funny Meme & Image\n"
-        " └ `/tod` - Truth or Dare\n\n"
-        "×̷̷͜×̷ *Select any option below!*\n\n💌 Powered by @MGB_NOT_FREE"
+    sys_p = (
+        "You are a dank Indian meme creator. Write ONLY a 2-3 line hilarious, savage Hinglish joke or meme dialogue. "
+        "NEVER write 'Top Caption', 'Bottom Caption', or 'Picture idea'. Just write the funny lines directly."
     )
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("✦ ᴀɪ ᴄʜᴀᴛ", callback_data="ai_chat_info"), InlineKeyboardButton("🕸️ ᴀɪ ɪᴍᴀɢᴇs", callback_data="ai_draw_info")],
-        [InlineKeyboardButton("🍷 sᴍᴀʀᴛ ᴅᴊ", callback_data="ai_dj_info"), InlineKeyboardButton("☠️ ʀᴏᴀsᴛ & ғᴜɴ", callback_data="ai_roast_info")],
-        [InlineKeyboardButton("🦅 𝐎𝐖𝐍𝐄𝐑 𝐂𝐎𝐍𝐓𝐀𝐂𝐓 🦅", url="https://t.me/MGB_CODER")]
-    ])
-    top_img = await generate_advanced_ai_image("cyberpunk luxury AI control panel core 4k")
-    await message.reply_photo(photo=top_img, caption=menu_text, reply_markup=keyboard)
+    meme_text = await fetch_advanced_ai_text(f"Write a funny Hinglish joke on: {topic}", sys_p)
+    caption = f"🎭 **MGB MEME ZONE** 🎭\n\n{meme_text}\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, f"funny anime reaction face {topic} 4k", caption)
 
 # ==========================================
-# 🧹 11. SERVER STORAGE CLEANER (Anti-Crash)
+# 🍷 8. /flirt & /shayari - ROMANCE MASTER
 # ==========================================
-@bot.on_message(filters.command("clearcache") & filters.user(8853897167))
-async def clear_server_cache(client, message: Message):
-    m = await message.reply_text("🧹 **Clearing VPS Storage Cache...**")
-    folders_to_clear = ["downloads", "cache", "__pycache__"]
-    cleared_count = 0
-    for folder in folders_to_clear:
-        if os.path.exists(folder):
-            try:
-                shutil.rmtree(folder)
-                cleared_count += 1
-            except:
-                pass
-    await m.edit_text(f"✅ **VPS Storage Trick Applied!**\n\n🗑️ Successfully deleted {cleared_count} junk/cache folders. Storage is now optimized.")
+@bot.on_message(filters.command(["shayari", "flirt"], prefixes=["/", "!", "."]))
+async def ai_shayari(client, message: Message):
+    target_name = (
+        message.reply_to_message.from_user.first_name
+        if message.reply_to_message and message.reply_to_message.from_user
+        else ""
+    )
+    if target_name:
+        prompt = f"Write a smooth, romantic 2-line Hinglish pickup line and 4-line shayari for {target_name}."
+    elif len(message.command) > 1:
+        topic = message.text.split(None, 1)[1]
+        prompt = f"Write a heart-touching 4-line Hindi/Hinglish shayari on: {topic}."
+    else:
+        prompt = "Write a romantic 4-line Hinglish love shayari."
         
+    sys_p = (
+        "You are a romantic shayar. Output ONLY a clean 4-line Hinglish shayari with aesthetic emojis. "
+        "No extra explanation."
+    )
+    m = await message.reply_text("🍷 **MGB AI shayari craft kar raha hai... ✨**")
+    result_text = await fetch_advanced_ai_text(prompt, sys_p)
+    header = f"🍷 **MGB ADVANCED FLIRT** 🍷\n👤 **Target:** {target_name}\n\n" if target_name else "🍷 **MGB AI SHAYARI** 🍷\n\n"
+    caption = f"{header}{result_text}\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, "romantic anime couple sunset aesthetic 4k", caption)
+
+# ==========================================
+# 🔥 9. /roast - SAVAGE ROASTER
+# ==========================================
+@bot.on_message(filters.command(["roast"], prefixes=["/", "!", "."]))
+async def ai_roast(client, message: Message):
+    target = (
+        message.text.split(None, 1)[1]
+        if len(message.command) > 1
+        else (message.reply_to_message.from_user.first_name if message.reply_to_message and message.reply_to_message.from_user else "Dost")
+    )
+    m = await message.reply_text("🔥 **MGB AI tandoor garam kar raha hai...**")
+    sys_p = (
+        "You are a savage Indian roaster. Write a brutal, hilarious 3-line Hinglish roast for the target. "
+        "Keep it super funny and punchy without weird symbols."
+    )
+    roast_text = await fetch_advanced_ai_text(f"Roast {target}", sys_p)
+    caption = f"🔥 **MGB SAVAGE ROAST** 🔥\n\n🎯 **Target:** {target}\n\n{roast_text}\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, "badass anime character fire aura 4k", caption)
+
+# ==========================================
+# 🎲 10. /tod - TRUTH OR DARE
+# ==========================================
+@bot.on_message(filters.command(["tod", "truthdare"], prefixes=["/", "!", "."]))
+async def ai_tod(client, message: Message):
+    m = await message.reply_text("🎲 **MGB AI game set kar raha hai...**")
+    sys_p = (
+        "Give one spicy/funny Truth question and one fun Dare task in Hinglish for a Telegram group chat. "
+        "Keep it short and formatted cleanly."
+    )
+    tod_text = await fetch_advanced_ai_text("Truth and Dare in Hinglish", sys_p)
+    caption = f"🎲 **MGB TRUTH OR DARE** 🎲\n\n{tod_text}\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, "anime gaming girl neon cyberpunk 4k", caption)
+
+# ==========================================
+# 🎧 11. /aidj - SMART AI MUSIC DJ
+# ==========================================
+@bot.on_message(filters.command(["aidj", "dj"], prefixes=["/", "!", "."]))
+async def ai_dj(client, message: Message):
+    mood = message.text.split(None, 1)[1] if len(message.command) > 1 else "chill lofi & romantic"
+    m = await message.reply_text("🎧 **MGB Smart DJ tracks mix kar raha hai...**")
+    sys_p = (
+        "You are MGB Smart DJ. Suggest 5 top Bollywood/Punjabi/Global songs matching the user's mood. "
+        "List them cleanly with emojis and tell the user they can play them using /play [song name]."
+    )
+    dj_text = await fetch_advanced_ai_text(f"Suggest 5 songs for mood: {mood}", sys_p)
+    caption = f"🎧 **MGB SMART AI DJ** 🎧\n\n🎶 **Mood:** `{mood}`\n\n{dj_text}\n\n💌 Powered by @MGB_NOT_FREE"
+    await send_4k_card(message, m, "anime dj girl neon club headphones 4k", caption)
+
+# ==========================================
+# 🗣️ 12. /speak - AI VOICE NOTE
+# ==========================================
+@bot.on_message(filters.command(["speak", "tts"], prefixes=["/", "!", "."]))
+async def ai_speak(client, message: Message):
+    if len(message.command) < 2:
+        m = await message.reply_text("✨ **Loading...**")
+        return await send_4k_card(
+            message, m,
+            "anime girl singing into microphone 4k",
+            "✦ **Boss, kya bulwana hai?**\nExample: `/speak Welcome to MGB Music Bot`"
+        )
+    text = message.text.split(None, 1)[1][:200]
+    m = await message.reply_text("🎙️ **MGB AI Voice record kar raha hai...**")
+    enc_text = urllib.parse.quote(text)
+    tts_url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={enc_text}&tl=hi&client=tw-ob"
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(tts_url, headers={"User-Agent": "Mozilla/5.0"}) as resp:
+                if resp.status == 200:
+                    voice_bio = io.BytesIO(await resp.read())
+                    voice_bio.name = "mgb_voice.ogg"
+                    await message.reply_voice(
+                        voice=voice_bio,
+                        caption=f"🎙️ **MGB AI VOICE:** `{text}`\n💌 Powered by @MGB_NOT_FREE",
+                        reply_markup=get_owner_kb()
+                    )
+                    return await m.delete()
+    except Exception:
+        pass
+    await send_4k_card(message, m, "anime girl microphone 4k", f"🎙️ `{text}`\n\n💌 Powered by @MGB_NOT_FREE")
+    
