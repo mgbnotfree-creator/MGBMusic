@@ -38,4 +38,5 @@ ALL_MODULES = [
     "welcome",
     "ai",
     "downloader",
+    "autocleaner",
 ]
