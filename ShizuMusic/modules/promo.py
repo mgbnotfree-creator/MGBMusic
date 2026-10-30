@@ -5,95 +5,35 @@ from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from ShizuMusic import bot
 
-# 🌟 Premium HD Prompts
-PROMPTS = [
-    "beautiful aesthetic anime girl, 4k resolution, highly detailed, masterpiece",
-    "cute anime girl in cyber neon city, 8k quality, glowing aesthetic",
-    "gorgeous anime waifu, sunset lighting, studio quality, hd",
-    "aesthetic anime girl profile picture, lo-fi background, 4k",
-    "anime girl with sword, dark aesthetic, extremely detailed, hd"
-]
-
-# 🧠 1. SUPERFAST TEXT AI
-async def fetch_promo_text():
-    prompt = "Write a highly engaging and aesthetic Telegram promotional message for 'MGB NOT FREE CODER'. Highlight services: Premium Music Bots, AI Bots, Render Deployment, and Custom APIs. Use aesthetic emojis, stylish formatting, and professional Hinglish. Keep it concise. Do not use bold markdown for the main title."
-    encoded_prompt = urllib.parse.quote(prompt)
-    url = f"https://text.pollinations.ai/{encoded_prompt}"
+async def generate_promo_image(prompt):
+    encoded_prompt = urllib.parse.quote(f"{prompt} highly detailed 4k resolution luxury cyberpunk promo banner")
+    lexica_url = f"https://lexica.art/api/v1/search?q={encoded_prompt}"
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
-                if resp.status == 200:
-                    return await resp.text()
-    except Exception:
-        return None
-    return None
-
-# 🎨 2. PREMIUM HD IMAGE API (Lexica - 100% Random Every Time)
-async def fetch_lexica_image():
-    # एक रैंडम प्रॉम्प्ट उठाएगा
-    base_prompt = random.choice(PROMPTS)
-    
-    # 🎯 हर बार नए रिज़ल्ट के लिए एक रैंडम एस्थेटिक कीवर्ड जोड़ेंगे
-    random_styles = ["cinematic lighting", "trending on artstation", "ultra detailed", "8k resolution", "unreal engine 5", "masterpiece"]
-    final_prompt = f"{base_prompt}, {random.choice(random_styles)}"
-    
-    encoded_prompt = urllib.parse.quote(final_prompt)
-    url = f"https://lexica.art/api/v1/search?q={encoded_prompt}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
+            async with session.get(lexica_url) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     if data and "images" in data and len(data["images"]) > 0:
-                        # 🎯 अब यह टॉप 3 के बजाय पूरी 50 इमेजेस की लिस्ट में से एक रैंडम फोटो निकालेगा!
-                        return random.choice(data["images"])["src"]
+                        return random.choice(data["images"][:5])["src"]
     except Exception:
-        return None
-    return None
+        pass
+    seed = random.randint(1000, 999999)
+    return f"https://image.pollinations.ai/prompt/cyberpunk%20luxury%20anime%20promo%20banner%204k?width=1280&height=1280&seed={seed}&nologo=true&enhance=true"
 
-@bot.on_message(filters.command(["promo", "promotion"], prefixes=["/", "!", "."]) & filters.user(8853897167))
-async def promo_message(client, message: Message):
-    m = await message.reply_text("⏳ **Premium Promo ban raha hai... Please wait!** 🕸️")
-    
-    me = await client.get_me()
-    bot_username = me.username
+@bot.on_message(filters.command("promo"))
+async def promo_handler(client, message: Message):
+    if len(message.command) < 2:
+        top_img = await generate_promo_image("vip promotion aesthetic banner")
+        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
+        return await message.reply_photo(photo=top_img, caption="✨ **Usage:** `/promo <your promotional text>`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
+        
+    promo_text = " ".join(message.command[1:])
+    top_img = await generate_promo_image(promo_text)
     
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")],
-        [
-            InlineKeyboardButton("𓆩♛𓆪 𝐒𝐔𝐏𝐏𝐎𝐑𝐓 ", url="https://t.me/MGB_CODER"),
-            InlineKeyboardButton("×̷̷͜×̷ 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 ", url="https://t.me/RIYA_MUSIC_BOT_786")
-        ],
-        [InlineKeyboardButton("🦅 𝐀𝐝𝐝 𝐌𝐞 🦅", url=f"https://t.me/{bot_username}?startgroup=true")]
+        [InlineKeyboardButton("×̷̷͜×̷ 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 ", url="https://t.me/RIYA_MUSIC_BOT_786")]
     ])
     
-    # Default Fallback Text
-    promo_text = (
-        "🎉 𝐒𝐏𝐄𝐂𝐈𝐀𝐋 𝐏𝐑𝐎𝐌𝐎𝐓𝐈𝐎𝐍 🎉\n\n"
-        "✨ MGB NOT FREE CODER ᴋɪ ᴛᴀʀᴀғ sᴇ ʙᴇsᴛ ᴏғғᴇʀs!\n\n"
-        "🔥 ᴀɢᴀʀ ᴀᴀᴘᴋᴏ ᴀᴘɴᴀ ᴋʜᴜᴅ ᴋᴀ ᴍᴜsɪᴄ ʙᴏᴛ, ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ʙᴏᴛ ʏᴀ "
-        "ᴋɪsɪ ʙʜɪ ᴛᴀʀᴀʜ ᴋᴀ ᴘʏᴛʜᴏɴ ᴘʀᴏᴊᴇᴄᴛ ʙᴀɴᴡᴀɴᴀ ʜᴀɪ, ᴛᴏʜ ᴀᴀᴊ ʜɪ ᴄᴏɴᴛᴀᴄᴛ ᴋᴀʀᴇɪɴ!\n\n"
-        "💎 ᴏᴜʀ sᴇʀᴠɪᴄᴇs:\n"
-        " ├ ʜɪɢʜ-ǫᴜᴀʟɪᴛʏ ᴍᴜsɪᴄ ʙᴏᴛs\n"
-        " ├ ᴠᴘs & ʀᴇɴᴅᴇʀ ᴅᴇᴘʟᴏʏᴍᴇɴᴛ\n"
-        " └ ᴄᴜsᴛᴏᴍ ᴀᴘɪ & ᴅᴀᴛᴀʙᴀsᴇ sᴇᴛᴜᴘ\n\n"
-        "💌 Powered by @MGB_NOT_FREE"
-    )
-
-    # Fetch AI Text & Image
-    ai_text = await fetch_promo_text()
-    if ai_text:
-        promo_text = f"{ai_text}\n\n💌 Powered by @MGB_NOT_FREE"
-        
-    img_url = await fetch_lexica_image()
-
-    # Send Final Message
-    try:
-        if img_url:
-            await message.reply_photo(photo=img_url, caption=promo_text, reply_markup=keyboard)
-        else:
-            await message.reply_text(text=promo_text, reply_markup=keyboard)
-        await m.delete()
-    except Exception as e:
-        await m.edit_text(f"❌ Promo Error: {e}")
+    await message.reply_photo(photo=top_img, caption=f"🔥 **MGB VIP PROMOTION ZONE** 🔥\n\n{promo_text}\n\n👑 **Join Now & Enjoy Unlimited Vibe!**\n\n💌 Managed by @MGB_NOT_FREE", reply_markup=keyboard)
     
