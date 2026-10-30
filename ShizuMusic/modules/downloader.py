@@ -1,84 +1,94 @@
+# ═══════════════════════════════════════════════════════════════
+#                     🎵 MGB NOT FREE CODER
+#               FAST YT-DLP DOWNLOADER + AUTO CLEAN
+# ═══════════════════════════════════════════════════════════════
+
 import os
-import shutil
-import random
-import urllib.parse
-import aiohttp
+import time
+import asyncio
 import yt_dlp
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from ShizuMusic import bot
+from ShizuMusic.modules.ai import send_4k_card, get_owner_kb
 
-async def generate_download_image(prompt):
-    encoded_prompt = urllib.parse.quote(f"{prompt} highly detailed 4k resolution music media aesthetic")
-    lexica_url = f"https://lexica.art/api/v1/search?q={encoded_prompt}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(lexica_url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    if data and "images" in data and len(data["images"]) > 0:
-                        return random.choice(data["images"][:5])["src"]
-    except Exception:
-        pass
-    seed = random.randint(1000, 999999)
-    return f"https://image.pollinations.ai/prompt/music%20media%20download%20aesthetic%20anime%204k?width=1280&height=1280&seed={seed}&nologo=true&enhance=true"
+DOWNLOAD_DIR = "downloads"
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
-@bot.on_message(filters.command(["dl", "video", "song"]))
-async def download_media(client, message: Message):
-    if len(message.command) < 2:
-        top_img = await generate_download_image("music downloader interface aesthetic")
-        keyboard = InlineKeyboardMarkup([[InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")]])
-        return await message.reply_photo(photo=top_img, caption="📥 **MGB MEDIA DOWNLOADER** 📥\n\n✨ **Usage:** `/dl <YouTube URL>`\n🚀 *Example:* `/dl https://youtu.be/...`\n\n💌 Powered by @MGB_NOT_FREE", reply_markup=keyboard)
-
-    url = message.command[1]
-    m = await message.reply_text("📥 **Downloading media, please wait...** ⏳")
-
-    ydl_opts = {
-        'format': 'best',
-        'outtmpl': 'downloads/%(id)s.%(ext)s',
-        'geo_bypass': True,
-        'nocheckcertificate': True,
-        'quiet': True
-    }
-    file_path = None
-
-    try:
-        os.makedirs("downloads", exist_ok=True)
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=True)
-            file_path = ydl.prepare_filename(info_dict)
-            title = info_dict.get('title', 'Downloaded Media')
-
-        await m.edit_text("📤 **Uploading to Telegram...** 🚀")
-        
-        top_img = await generate_download_image(title)
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")],
-            [InlineKeyboardButton("×̷̷͜×̷ 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 ", url="https://t.me/RIYA_MUSIC_BOT_786")]
-        ])
-        
-        await message.reply_photo(photo=top_img, caption=f"✨ **MGB DOWNLOAD ZONE** ✨\n\n🎵 **Title:** `{title}`\n\n❤️ **Powered by @MGB_NOT_FREE**", reply_markup=keyboard)
-        
-        if file_path and ('mp3' in file_path or 'audio' in url):
-            await message.reply_audio(audio=file_path, caption=title)
-        else:
-            await message.reply_video(video=file_path, caption=title)
-
-        await m.delete()
-
-    except Exception as e:
-        await m.edit_text(f"❌ **Download Error:** Video private ho sakti hai ya link galat hai!\n`Error: {e}`")
+def download_media_sync(query: str, is_audio: bool = False):
+    ts = int(time.time())
+    outtmpl = os.path.join(DOWNLOAD_DIR, f"mgb_{ts}_%(id)s.%(ext)s")
+    search_target = query if query.startswith(("http://", "https://")) else f"ytsearch1:{query}"
     
+    ydl_opts = {
+        "outtmpl": outtmpl,
+        "quiet": True,
+        "no_warnings": True,
+        "noplaylist": True,
+        "max_filesize": 50 * 1024 * 1024,
+        "geo_bypass": True,
+    }
+    if is_audio:
+        ydl_opts["format"] = "bestaudio/best"
+    else:
+        ydl_opts["format"] = "best[ext=mp4][height<=720]/best[ext=mp4]/best"
+        
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(search_target, download=True)
+        if "entries" in info:
+            info = info["entries"][0]
+        file_path = ydl.prepare_filename(info)
+        title = info.get("title", "MGB Media")
+        return file_path, title
+
+@bot.on_message(filters.command(["dl", "download", "video", "song"], prefixes=["/", "!", "."]))
+async def media_downloader(client, message: Message):
+    if len(message.command) < 2:
+        m = await message.reply_text("✨ **Loading...**")
+        return await send_4k_card(
+            message=message,
+            status_msg=m,
+            prompt_img="anime girl listening to music neon headphones 4k",
+            caption=(
+                "📥 **MGB ULTRA FAST DOWNLOADER** 📥\n\n"
+                "✦ **How to use:**\n"
+                "• `/dl [YouTube/Insta Link ya Song Name]`\n"
+                "• `/song [Song Name]` (Audio ke liye)\n"
+                "• `/video [Video Name/Link]` (Video ke liye)\n\n"
+                "💌 Powered by @MGB_NOT_FREE"
+            )
+        )
+        
+    cmd = message.command[0].lower()
+    is_audio = cmd == "song"
+    query = message.text.split(None, 1)[1]
+    
+    m = await message.reply_text(f"📥 **MGB Downloader `{query}` download kar raha hai...** ⚡")
+    file_path = None
+    
+    try:
+        file_path, title = await asyncio.to_thread(download_media_sync, query, is_audio)
+        caption = (
+            f"🎬 **Title:** `{title[:80]}`\n"
+            f"👤 **Requested by:** {message.from_user.mention if message.from_user else 'User'}\n\n"
+            f"💌 Powered by @MGB_NOT_FREE"
+        )
+        if is_audio:
+            await message.reply_audio(audio=file_path, caption=caption, title=title[:60], reply_markup=get_owner_kb())
+        else:
+            await message.reply_video(video=file_path, caption=caption, reply_markup=get_owner_kb())
+        await m.delete()
+    except Exception as e:
+        await send_4k_card(
+            message, m,
+            "cute anime girl confused 4k",
+            f"❌ **Download Error:** `{str(e)[:200]}`\n\n💌 Powered by @MGB_NOT_FREE"
+        )
     finally:
-        # 🌟 STORAGE FULL TRICK (100% Guaranteed Cleanup) 🌟
+        # Instant file cleanup so VPS disk never fills up!
         if file_path and os.path.exists(file_path):
             try:
                 os.remove(file_path)
-            except:
+            except Exception:
                 pass
-        try:
-            if os.path.exists("downloads"):
-                shutil.rmtree("downloads")
-        except:
-            pass
-    
+                
