@@ -1,54 +1,70 @@
-import random
-import urllib.parse
-import aiohttp
+# ═══════════════════════════════════════════════════════════════
+#                     🎵 MGB NOT FREE CODER
+#                  4K ANIME WELCOME GREETINGS
+# ═══════════════════════════════════════════════════════════════
+
 from pyrogram import filters
 from pyrogram.types import Message, InlineKeyboardButton, InlineKeyboardMarkup
 from ShizuMusic import bot
+from ShizuMusic.modules.ai import send_4k_card
 
-async def generate_welcome_image(prompt):
-    encoded_prompt = urllib.parse.quote(f"{prompt} highly detailed 4k resolution aesthetic anime greeting")
-    lexica_url = f"https://lexica.art/api/v1/search?q={encoded_prompt}"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(lexica_url) as resp:
-                if resp.status == 200:
-                    data = await resp.json()
-                    if data and "images" in data and len(data["images"]) > 0:
-                        return random.choice(data["images"][:5])["src"]
-    except Exception:
-        pass
-    seed = random.randint(1000, 999999)
-    return f"https://image.pollinations.ai/prompt/cute%20anime%20girl%20welcoming%20aesthetic%204k?width=1280&height=1280&seed={seed}&nologo=true&enhance=true"
+def get_welcome_kb(bot_username: str):
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("🎵 𝐀𝐃𝐃 𝐌𝐄", url=f"https://t.me/{bot_username}?startgroup=true"),
+            InlineKeyboardButton("👑 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER"),
+        ]
+    ])
 
 @bot.on_message(filters.new_chat_members)
 async def welcome_new_member(client, message: Message):
-    me = await client.get_me()
-    bot_id = me.id
-    bot_username = me.username
-
+    bot_me = await client.get_me()
     for member in message.new_chat_members:
-        if member.id == bot_id:
+        if member.id == bot_me.id:
             continue
             
-        keyboard = InlineKeyboardMarkup([
-            [InlineKeyboardButton("🂡 𝐎𝐖𝐍𝐄𝐑", url="https://t.me/MGB_CODER")],
-            [InlineKeyboardButton("𓆩♛𓆪 𝐒𝐔𝐏𝐏𝐎𝐑𝐓 ", url="https://t.me/MGB_CODER"), InlineKeyboardButton("×̷̷͜×̷ 𝐂𝐇𝐀𝐍𝐍𝐄𝐋 ", url="https://t.me/RIYA_MUSIC_BOT_786")],
-            [InlineKeyboardButton("🦅 𝐀𝐝𝐝 𝐌𝐞 🦅", url=f"https://t.me/{bot_username}?startgroup=true")]
-        ])
+        user_mention = member.mention
+        chat_title = message.chat.title or "Our Group"
         
-        welcome_text = (
-            f"🎉 𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐎𝐔𝐑 𝐆𝐑𝐎𝐔𝐏 🎉\n\n"
-            f"✨ ʜᴇʏ {member.mention}, ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ {message.chat.title}!\n\n"
-            f"💎 ᴍᴇᴍʙᴇʀ ɪɴғᴏ:\n"
-            f" ├ ɴᴀᴍᴇ: {member.first_name}\n"
-            f" ├ ɪᴅ: {member.id}\n"
-            f" └ ᴜsᴇʀɴᴀᴍᴇ: @{member.username if member.username else 'N/A'}\n\n"
+        welcome_caption = (
+            f"🎉 **𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 {chat_title.upper()}** 🎉\n\n"
+            f"👋 Hey {user_mention}, group mein aapka swagat hai!\n\n"
+            f"┏━━━━━━━━━━━━━━━━━━━⧫\n"
+            f"┠ 🎵 **24/7 Lag-Free Music:** `/play`\n"
+            f"┠ 🤖 **Smart AI & 4K Art:** `/aimenu`\n"
+            f"┠ 📥 **Fast Downloader:** `/dl`\n"
+            f"┗━━━━━━━━━━━━━━━━━━━⧫\n\n"
             f"💌 Powered by @MGB_NOT_FREE"
         )
         
-        top_img = await generate_welcome_image("cute anime girl welcoming new member")
-        try:
-            await message.reply_photo(photo=top_img, caption=welcome_text, reply_markup=keyboard)
-        except Exception:
-            pass
-            
+        await send_4k_card(
+            message=message,
+            status_msg=None,
+            prompt_img="cute anime girl smiling welcoming cherry blossom 4k",
+            caption=welcome_caption,
+            reply_markup=get_welcome_kb(bot_me.username)
+        )
+
+@bot.on_message(filters.command(["welcome"], prefixes=["/", "!", "."]))
+async def test_welcome_cmd(client, message: Message):
+    m = await message.reply_text("🌸 **Generating 4K Welcome Card...**")
+    bot_me = await client.get_me()
+    chat_title = message.chat.title or "MGB VIP Lounge"
+    welcome_caption = (
+        f"🎉 **𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 {chat_title.upper()}** 🎉\n\n"
+        f"👋 Hey {message.from_user.mention}, group mein aapka swagat hai!\n\n"
+        f"┏━━━━━━━━━━━━━━━━━━━⧫\n"
+        f"┠ 🎵 **24/7 Lag-Free Music:** `/play`\n"
+        f"┠ 🤖 **Smart AI & 4K Art:** `/aimenu`\n"
+        f"┠ 📥 **Fast Downloader:** `/dl`\n"
+        f"┗━━━━━━━━━━━━━━━━━━━⧫\n\n"
+        f"💌 Powered by @MGB_NOT_FREE"
+    )
+    await send_4k_card(
+        message=message,
+        status_msg=m,
+        prompt_img="cute anime girl welcoming neon aesthetic 4k",
+        caption=welcome_caption,
+        reply_markup=get_welcome_kb(bot_me.username)
+    )
+    
