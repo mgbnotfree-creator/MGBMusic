@@ -119,13 +119,13 @@ if __name__ == "__main__":
     except Exception as e:
         LOGGER.warning(f"MongoDB startup error: {e} — continuing without DB.")
 
-    # 2. Flask
-    threading.Thread(target=_run_flask, daemon=True).start()
-    LOGGER.info(f"Flask health server on port {config.PORT}")
+    # 2. Flask (DISABLED FOR VPS SPEED)
+    # threading.Thread(target=_run_flask, daemon=True).start()
+    # LOGGER.info(f"Flask health server on port {config.PORT}")
 
-    # 3. Keep-alive ping
-    threading.Thread(target=_keep_alive, daemon=True).start()
-    LOGGER.info("Keep-alive thread started")
+    # 3. Keep-alive ping (DISABLED FOR VPS SPEED)
+    # threading.Thread(target=_keep_alive, daemon=True).start()
+    # LOGGER.info("Keep-alive thread started")
 
     # 4. Bot start
     for attempt in range(10):
